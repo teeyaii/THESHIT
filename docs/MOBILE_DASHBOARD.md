@@ -1,0 +1,4 @@
+# Mobile control — offline synthetic dashboard
+Build an offline responsive HTML snapshot from a verified synthetic demo bundle. Counters come from verified output, not placeholders or live status. Links navigate to GitHub Actions workflows and the release backlog; actual authorization and execution happen on GitHub. No embedded scripts, forms, network-loaded resources, credentials, uploads, private workspace or real study data.
+
+Run the dedicated GitHub Actions workflow to download the HTML artifact. After extracting it, open index.html in a browser. No persistent web service or public Pages deployment has been created. Responsive CSS and viewport contract tested structurally; actual iPhone/browser visual and accessibility QA remain pending. This is not yet a complete authenticated research workspace.
