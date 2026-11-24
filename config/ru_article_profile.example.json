@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "profile_id": "RU_ARTICLE_SYNTHETIC_EXAMPLE",
+  "status": "SYNTHETIC_LAYOUT_ONLY",
+  "official_article_template_verified": false,
+  "source_template_sha256": null,
+  "source_template_url": null,
+  "notes": "Separate from the IS full-volume profile. Do not treat sample sizes, margins or spacing as official 2569 article requirements.",
+  "font": "Browallia New",
+  "body_pt": 16,
+  "title_pt": 22,
+  "heading_pt": 18,
+  "paper_mm": [
+    210,
+    297
+  ],
+  "margin_mm": 25.4,
+  "line_spacing": 1
+}
