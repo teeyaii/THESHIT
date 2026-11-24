@@ -19,6 +19,8 @@ class PDFPreviewTests(unittest.TestCase):
             p=Path(d)/"fixture.docx"
             expected=prepare_docx(sample(),p)
             self.assertGreater(len(expected["markers"]),10)
+            self.assertEqual(len(expected["source_markers"]),4)
+            self.assertEqual("".join(m.split(": ")[1] for m in expected["source_markers"]),expected["source_sha256"])
             doc=Document(p)
             self.assertEqual(doc.paragraphs[0].text,LABEL)
             self.assertIn(PREVIEW,doc.paragraphs[1].text)
