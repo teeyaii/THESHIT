@@ -1,13 +1,13 @@
 # THESHIT
 AI-powered research automation and statistical analysis engine.
 
-## v0.2 — versioned synthetic codebook
+## v0.2.1 — versioned synthetic codebook
 Generic four-construct, 14-item Likert demo. Independent random fixtures, not actual responses or a validated questionnaire. No real-data input in this version.
 
 ## Run
 Python 3.11+:
 ```sh
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-oss.txt
 python -m unittest discover -s tests -v
 python research_demo.py
 ```
@@ -18,3 +18,6 @@ Public code only; keep participant data, unpublished documents, credentials and 
 
 
 The draft schema is in config/demo_codebook.json. Reports include its SHA-256 and data audit. See docs/MASTER_PLAN.md for release gates. Actual questionnaire wording and demographic coding are not verified or included.
+
+## Open Source adapters
+See docs/OPEN_SOURCE.md for upstream credits, pinned direct dependencies, adapter functions and pending validation. Tests use only generated local fixtures.
