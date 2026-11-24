@@ -15,7 +15,7 @@ class RUThesisTests(unittest.TestCase):
             self.assertEqual(qa["toc_status"],"FIELD_PRESENT_NOT_UPDATED")
             self.assertEqual(verify(p),qa)
             doc=Document(p/"SYNTHETIC_RU_structure.docx")
-            self.assertEqual(doc.styles["RU Chapter"].font.size.pt,22)
+            self.assertEqual(doc.styles["RU Chapter"].font.size.pt,20)
             self.assertEqual(doc.styles["RU Body"].font.size.pt,16)
             self.assertFalse(doc.styles["RU Chapter"].font.bold)
             self.assertEqual(doc.styles["RU Subheading"].font.size.pt,20)
