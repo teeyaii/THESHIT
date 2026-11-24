@@ -57,11 +57,17 @@ def analyze(frame, predictors, outcome, *, source_label, missing_policy="reject"
     if np.ptp(y)==0 or np.linalg.matrix_rank(x)!=x.shape[1]:
         raise ValueError("Constant outcome or rank-deficient design")
     fit=sm.OLS(y,design).fit()
-    if float(fit.ssr)<=np.finfo(float).eps*max(float(fit.centered_tss),1.0):
+    total=float(fit.centered_tss);residual=float(fit.ssr)
+    if not np.isfinite(total) or total<=0 or not np.isfinite(residual) or residual<0:
+        raise ValueError("Outcome variance outside supported numerical range")
+    # Dimensionless ratio: changing the units of y must not change this guard.
+    if residual/total<=np.finfo(float).eps:
         raise ValueError("Near-perfect fit; inference is degenerate")
     robust=fit.get_robustcov_results(cov_type="HC3",use_t=True)
     beta,cov=independent_fit(x,y)
-    if not np.allclose(beta,fit.params.to_numpy(),rtol=1e-7,atol=1e-9) or not np.allclose(cov,robust.cov_params(),rtol=1e-7,atol=1e-9):
+    outcome_scale=np.sqrt(total/n)
+    # Compare in standardized outcome units rather than a fixed raw-unit tolerance.
+    if not np.allclose(beta/outcome_scale,fit.params.to_numpy()/outcome_scale,rtol=1e-7,atol=1e-9) or not np.allclose(cov/total*n,robust.cov_params()/total*n,rtol=1e-7,atol=1e-9):
         raise ValueError("Independent OLS/HC3 cross-check failed")
     ci=fit.conf_int().to_numpy()
     rci=robust.conf_int()
