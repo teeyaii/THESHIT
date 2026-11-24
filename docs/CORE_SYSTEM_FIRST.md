@@ -25,3 +25,6 @@ Pause project-specific questionnaire development, personnel registry, real intak
 - Mobile control interface, only after core acceptance
 
 Evaluate Docling, GROBID, Tesseract Thai, Quarto, Pingouin and Streamlit individually before adoption. No additional servers or real study material.
+
+## CI remediation
+Initial run 45322753156 installed and tested successfully, but pip-audit reported eight advisories against pip 24.0 (six) and setuptools 79.0.1 (two). Include both bootstrap packages in the hashed runtime lock with minimum remediation versions pip 26.2 and setuptools 84.1.0, as reported by the advisory output. Existing synthetic CI installs requirements-oss.txt, so declare the Excel and SciPy dependencies there as well. Re-run the same security gate without exclusions; results remain pending until CI completes.
