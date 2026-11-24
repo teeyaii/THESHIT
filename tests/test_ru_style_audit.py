@@ -35,7 +35,7 @@ class RUStyleTests(unittest.TestCase):
         self.assertEqual(p["chapter_size_pt"],22)
         self.assertIsNone(p["literature_policy"]["max_age_years"])
         self.assertFalse(p["literature_policy"]["age_is_exclusion"])
-        self.assertEqual(p["latest_guide_status"],"LISTED_2569_CONTENT_NOT_VERIFIED")
+        self.assertEqual(p["latest_guide_status"],"2569_SELECTED_PAGES_VISUALLY_VERIFIED")
         self.assertIsNone(get_profile("ru_mba_campus_2568")["chapter_size_pt"])
 
     def test_chapter_and_spacing(self):
