@@ -1,6 +1,6 @@
 # RU MBA 2569 working policy
-2026-11-24. The official campus homepage lists the semester 1/2569 guide, linked to Google Drive. The listing and filename were retrieved, but guide PDF contents could not be inspected. Prefer the latest verified applicable source as soon as obtainable. Do not claim 2569 page-level verification. Working profile ru_mba_campus_2569_working inherits still-unconfirmed 2568 values separately from the unchanged historical profile.
-- Chapter number/title: 22 pt working decision by project owner. Retain historical 20/22 source conflict. Browallia New. Remaining template-dependent values unresolved until the actual guide and approved template are available.
+2026-11-24. Official 1/2569 PDF retrieved and selected pages visually verified; see docs/RU_2569_SOURCE_RECONCILIATION.md. Current cohort Word template still pending. Historical 2568 profile remains unchanged.
+- Chapter number/title: 20 pt working decision by project owner, following detailed 2569 p9. Retain 20/22 source conflict. Browallia New. Remaining template-dependent values unresolved until the actual guide and approved template are available.
 - Literature: owner reports consultation with advisor; no maximum age cutoff. Select relevant, credible, source-verifiable work. Do not reject work solely because it is over five years old. Preserve foundational and historical research where appropriate. This is a project decision, not a claim that the university changed its general rules.
 - Official 2569 link: https://drive.google.com/file/d/1jNSYUkPM5QWxQ9F9nZgfeJ0A6NftXkHs/view?usp=sharing
 - Official listing: https://mba-campus.ru.ac.th/index.php
