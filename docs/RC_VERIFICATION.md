@@ -1,0 +1,6 @@
+# Combined RC verification
+Baseline after merging PRs 27, 28 and 30: main 1958e1a10bd78eb199bc166f16adccb547d3ba8a; all previous PRs closed. Run all tests together with native Thai OCR and PDF preview dependencies, and generate one integrated synthetic bundle. A separate public-probe job repeats live Crossref/OpenAlex and five fixed publisher first-page PDF probes. No private documents, participant data, or font files.
+
+The RC bundle uses one computed report for writing, report, full thesis skeleton, article skeleton and PDF preview; verifies source hashes, reopened files, and manifest. Style inventory and language candidates are diagnostic, not accepted formatting. The core demo is a separate synthetic fixture for dashboard verification. Runtime constraints and the separate existing Core OSS workflow are required; no claims of independent external reviewer approval.
+
+Release gate report is intentionally unpopulated with PASS attestations: all mandatory gates require separate evidence. Combined CI may support the software gate only. It cannot close Thai full corpus, exact RU 2569 manual/template, source semantic review, actual Word/Browallia rendering, complex manuscript assembly, independent reviewer or owner gates. No release tag, deployment, questionnaire or real-data intake.
