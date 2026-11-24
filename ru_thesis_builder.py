@@ -40,8 +40,8 @@ def font_props(style,font,size,bold=False):
 
 def make_styles(doc,profile):
     font=profile["body"]["font"];body=profile["body"]["size_pt"]
-    specs={"RU Body":(body,False),"RU Chapter":(profile["chapter_size_pt"],True),
-           "RU Front":(22,True),"RU Subheading":(18,True),
+    specs={"RU Body":(body,False),"RU Chapter":(profile["chapter_size_pt"],profile["chapter_bold"]),
+           "RU Front":(22,True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
            "RU Table":(body,False),"RU Caption":(body,False),
            "RU Reference":(profile["bibliography_pt"],False),
            "RU Appendix":(profile["appendix_divider_pt"],True),
@@ -88,7 +88,7 @@ def plan(report):
     return {"label":LABEL,"profile":PROFILE,"source_sha256":source_hash(report),
             "chapters":[{"number":n,"title":t} for n,t in CHAPTERS],
             "numeric_draft":d,
-            "pending":["Actual approved 2569 guide and template",
+            "pending":["Current approved 2569 Word template and remaining manual reconciliation",
                        "Independent source review and study protocol",
                        "Actual licensed fonts and full Microsoft Word visual QA",
                        "TOC, page fields, section-specific margins, references and academic review"],
@@ -109,13 +109,23 @@ def build(report,output_dir):
     title=add(NOTICE,"RU Notice");title.alignment=WD_ALIGN_PARAGRAPH.CENTER
     add("โครงสร้างการค้นคว้าอิสระ มหาวิทยาลัยรามคำแหง (ตัวอย่างระบบ)","RU Front").paragraph_format.page_break_before=False
     add("Working profile 2569 — ยังไม่ใช่แม่แบบที่อนุมัติ")
+    add("ปกใน / ปกรอง","RU Front")
+    add("ตำแหน่งข้อมูลตามแม่แบบที่ได้รับอนุมัติ")
+    add("คำปฏิญาณตน","RU Front")
+    add("รอผู้วิจัยตรวจและลงนามด้วยตนเอง ไม่สร้างคำรับรองหรือลายเซ็น")
     add("บทคัดย่อ","RU Front")
     add("รอข้อความบทคัดย่อภาษาไทยจากงานวิจัยจริงที่ได้รับอนุมัติ")
     add("Abstract","RU Front")
     add("English abstract pending approved research.")
+    add("กิตติกรรมประกาศ","RU Front")
+    add("รอข้อความจากผู้วิจัย")
     add("สารบัญ","RU Front")
     toc=doc.add_paragraph(style="RU Body")
     field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2" \\h \\z',"TOC PENDING WORD UPDATE")
+    add("สารบัญตาราง","RU Front")
+    add("รออัปเดตสารบัญตารางใน Word")
+    add("สารบัญภาพ","RU Front")
+    add("รออัปเดตสารบัญภาพใน Word")
     # Field placeholder is not an accepted table of contents.
     main=doc.add_section(WD_SECTION_START.NEW_PAGE)
     set_section(main,profile)
@@ -149,6 +159,9 @@ def build(report,output_dir):
     add("ยังไม่มีรายการอ้างอิงที่ได้รับการตรวจรับ ไม่สร้างรายการอ้างอิงสมมติ","RU Reference")
     add("ภาคผนวก","RU Appendix")
     add("รอเอกสารที่ได้รับอนุมัติ ไม่มีแบบสอบถามหรือข้อมูลบุคคลในตัวอย่างนี้")
+    add("แบบเปิดเผยการใช้ AI — รอแบบจริงและการยืนยันโดยผู้วิจัย","RU Subheading")
+    add("ประวัติผู้เขียน","RU Front")
+    add("รอข้อมูลที่ได้รับอนุญาต ไม่สร้างประวัติสมมติ")
     doc.settings.element.append(element("updateFields",val="true"))
     target=out/"SYNTHETIC_RU_structure.docx";doc.save(target)
     manifest={"label":LABEL,"notice":NOTICE,"profile":PROFILE,"source_sha256":p["source_sha256"],
