@@ -25,12 +25,16 @@ def model(report):
         ("บทคัดย่อ","รอบทคัดย่อจากงานที่ได้รับอนุมัติ"),
         ("Abstract","Pending approved English abstract."),
         ("คำสำคัญ / Keywords","รอคำสำคัญจากงานที่ได้รับอนุมัติ"),
-        ("บทนำ","รอเนื้อหาและหลักฐานที่ผ่านการตรวจ"),
-        ("ทบทวนวรรณกรรม","รอแหล่งอ้างอิงที่ผ่านการตรวจ ไม่จำกัดอายุงานเพียงอย่างเดียว"),
-        ("วิธีดำเนินการวิจัย","ต่อไปนี้เป็นวิธีทดสอบซอฟต์แวร์ ไม่ใช่วิธีวิจัยภาคสนาม"),
+        ("ความเป็นมาและความสำคัญของปัญหา","รอเนื้อหาและหลักฐานที่ผ่านการตรวจ"),
+        ("วัตถุประสงค์การวิจัย","รอวัตถุประสงค์ที่ได้รับอนุมัติ"),
+        ("สมมติฐานการวิจัย","รอสมมติฐานที่ได้รับอนุมัติ"),
+        ("ขอบเขตของการวิจัย","รอขอบเขตที่ได้รับอนุมัติ"),
+        ("แนวคิด ทฤษฎี และงานวิจัยที่เกี่ยวข้อง","รอแหล่งอ้างอิงที่ผ่านการตรวจ ไม่จำกัดอายุงานเพียงอย่างเดียว"),
+        ("วิธีการดำเนินการวิจัย","ต่อไปนี้เป็นวิธีทดสอบซอฟต์แวร์ ไม่ใช่วิธีวิจัยภาคสนาม"),
     ]
     sections.extend(("Methods fixture",p["text"]) for p in d["paragraphs"] if p["section"]=="Methods")
-    sections.append(("ผลการวิเคราะห์","ข้อมูลสังเคราะห์เพื่อทดสอบการแสดงผลเท่านั้น"))
+    sections.append(("การวิเคราะห์ข้อมูล","รอแผนการวิเคราะห์ที่ได้รับอนุมัติ"))
+    sections.append(("ผลการวิจัย","ข้อมูลสังเคราะห์เพื่อทดสอบการแสดงผลเท่านั้น"))
     sections.extend(("Results fixture",p["text"]) for p in d["paragraphs"] if p["section"]=="Results")
     sections.extend([("อภิปรายผล","ระงับการอภิปรายจนกว่าจะมีผลจริงและหลักฐานที่ผ่านการตรวจ"),
                      ("ข้อจำกัด","ไม่ใช้ผลสังเคราะห์เป็นผลการวิจัย"),
@@ -49,7 +53,8 @@ def build(report,output_dir):
     out=Path(output_dir);out.mkdir(parents=True,exist_ok=False)
     doc=Document()
     sec=doc.sections[0];sec.page_width=Mm(profile["paper_mm"][0]);sec.page_height=Mm(profile["paper_mm"][1])
-    sec.top_margin=sec.bottom_margin=sec.left_margin=sec.right_margin=Mm(profile["margin_mm"])
+    for side,mm in profile["margins_mm"].items():
+        setattr(sec,side+"_margin",Mm(mm))
     for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Body","body_pt",False)]:
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         s.font.name=profile["font"];s.font.size=Pt(profile[key]);s.font.bold=bold
