@@ -53,7 +53,10 @@ def prepare_docx(report,path):
     apply_font(section.footer.paragraphs[0].add_run(PREVIEW),10)
     line(doc,LABEL,14)
     line(doc,PREVIEW,11)
-    line(doc,"Source SHA256: "+d["source_sha256"],9)
+    # Short labeled groups avoid line-wrap ambiguity in PDF extraction.
+    source_markers=[f"SHA256 part {i+1}/4: {d[\"source_sha256\"][i*16:(i+1)*16]}" for i in range(4)]
+    for marker in source_markers:
+        line(doc,marker,9)
     for paragraph in d["paragraphs"]:
         line(doc,paragraph["section"],13)
         line(doc,paragraph["text"],12)
@@ -65,7 +68,7 @@ def prepare_docx(report,path):
         markers.append(marker);line(doc,marker,11)
     doc.save(target)
     return {"label":LABEL,"source_sha256":d["source_sha256"],
-            "markers":markers,"paragraphs":[p["text"] for p in d["paragraphs"]],
+            "source_markers":source_markers,"markers":markers,"paragraphs":[p["text"] for p in d["paragraphs"]],
             "docx_sha256":sha(target)}
 
 def inspect_pdf(path,expected):
@@ -79,7 +82,7 @@ def inspect_pdf(path,expected):
     markers=[m for m in expected["markers"] if norm(m) not in flat]
     missing_paragraphs=[i for i,p in enumerate(expected["paragraphs"]) if norm(p) not in flat]
     label_ok=norm(LABEL) in flat and norm(PREVIEW) in flat
-    hash_ok=norm(expected["source_sha256"]) in flat
+    hash_ok=all(norm(marker) in flat for marker in expected["source_markers"])
     return {"label":LABEL,"pdf_sha256":sha(source),"page_count":pages,
             "native_text_present":bool(flat),"source_hash_text_present":hash_ok,
             "preview_labels_present":label_ok,"fact_markers_checked":len(expected["markers"]),
