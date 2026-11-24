@@ -29,15 +29,16 @@ def validate(report):
 def tables(report):
     validate(report)
     model=report["model"]
+    fields=[report["outcome"],*report["predictors"]]
     return {
       "Cases":[["Metric","Value"],["Input",report["n_input"]],
                ["Complete",report["n_complete"]],["Excluded",report["n_excluded"]],
                ["Missing policy",report["missing_policy"]]],
       "Descriptive":[["Variable","N","Mean","SD","Min","Max"]]+[
-          [k,*[v[f] for f in ("n","mean","sd","min","max")]] for k,v in report["descriptives"].items()],
-      "Correlation":[["Variable",*report["correlation"]]]+[
-          [k,*[report["correlation"][j][k] for j in report["correlation"]]]
-          for k in report["correlation"]],
+          [k,*[v[f] for f in ("n","mean","sd","min","max")]] for k in fields for v in [report["descriptives"][k]]],
+      "Correlation":[["Variable",*fields]]+[
+          [k,*[report["correlation"][j][k] for j in fields]]
+          for k in fields],
       "Model":[["Metric","Value"],["R squared",model["r_squared"]],
                ["Adjusted R squared",model["adjusted_r_squared"]],["F",model["f"]],
                ["F p",model["f_p"]],["Residual df",model["df_residual"]],
@@ -47,8 +48,8 @@ def tables(report):
           [r["variable"],r["b"],r["beta_standardized"],r["se"],r["p"],*r["ci95"],
            r["hc3_se"],r["hc3_p"],*r["hc3_ci95"],r["vif"]]
           for r in model["coefficients"]],
-      "Diagnostics":[["Metric","Value"]]+[[k,v] for k,v in report["diagnostics"].items()],
-      "Missing":[["Variable","Missing count"]]+[[k,v] for k,v in report["missing_by_variable"].items()]}
+      "Diagnostics":[["Metric","Value"]]+[[k,report["diagnostics"][k]] for k in sorted(report["diagnostics"])],
+      "Missing":[["Variable","Missing count"]]+[[k,report["missing_by_variable"][k]] for k in fields]}
 
 def text_value(value):
     if value is None:
