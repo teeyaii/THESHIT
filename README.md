@@ -21,3 +21,6 @@ The draft schema is in config/demo_codebook.json. Reports include its SHA-256 an
 
 ## Open Source adapters
 See docs/OPEN_SOURCE.md for upstream credits, pinned direct dependencies, adapter functions and pending validation. Tests use only generated local fixtures.
+
+## Evidence Engine v0.3
+See docs/EVIDENCE_ENGINE.md for local candidate matching, cropped evidence images, hashed index, DOCX atlas and read-only Word paragraph location. No claim is automatically verified. Use only generated fixtures in public CI; actual source material stays private.
