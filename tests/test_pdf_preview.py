@@ -34,6 +34,7 @@ class PDFPreviewTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             qa=render_preview(sample(),Path(d)/"preview")
             self.assertTrue(qa["fact_text_gate"])
+            self.assertTrue(qa["paragraph_text_gate"])
             self.assertFalse(qa["academic_acceptance"])
             self.assertEqual(qa["word_visual_qa"],"NOT_EXECUTED")
             self.assertGreater(qa["page_count"],0)
