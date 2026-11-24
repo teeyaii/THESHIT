@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+from urllib.parse import urlparse, parse_qs
 from discovery_smoke import smoke
 from research_discovery import discover
 
@@ -10,6 +11,7 @@ class SmokeTests(unittest.TestCase):
             self.assertNotIn("Authorization",headers)
             if "crossref.org" in url:
                 return {"message":{"items":[{"DOI":"10.1234/test","title":["Fixture"]}]}}
+            self.assertEqual(parse_qs(urlparse(url).query)["filter"],["has_doi:true"])
             return {"results":[{"doi":"https://doi.org/10.1234/test","display_name":"Fixture"}]}
         out=smoke(fake)
         self.assertEqual(out["mode"],"MOCK")
