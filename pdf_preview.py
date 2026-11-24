@@ -54,7 +54,8 @@ def prepare_docx(report,path):
     line(doc,LABEL,14)
     line(doc,PREVIEW,11)
     # Short labeled groups avoid line-wrap ambiguity in PDF extraction.
-    source_markers=[f"SHA256 part {i+1}/4: {d[\"source_sha256\"][i*16:(i+1)*16]}" for i in range(4)]
+    source_hash=d["source_sha256"]
+    source_markers=[f"SHA256 part {i+1}/4: {source_hash[i*16:(i+1)*16]}" for i in range(4)]
     for marker in source_markers:
         line(doc,marker,9)
     for paragraph in d["paragraphs"]:
