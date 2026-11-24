@@ -14,6 +14,7 @@ def smoke(fetch=None):
             kwargs["fetch"]=fetch
         if provider=="openalex":
             kwargs["allow_anonymous"]=True
+            kwargs["require_doi"]=True
         try:
             rows=discover(QUERY,**kwargs)
             if not rows:
