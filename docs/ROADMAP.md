@@ -1,11 +1,6 @@
-# Roadmap
-## v0.1 — synthetic-only sandbox
-- Neutral synthetic fixtures, schema validation, descriptives, alpha, correlation, OLS and HC3 sensitivity, tests.
-## v0.2 — protocol and evidence
-- Lock the approved questionnaire, codebook, sampling and missing-data rules in a private environment.
-- Track citation provenance and evidence without publishing private study material.
-## v0.3 — authorized survey analysis
-- Consent, de-identification, private storage, data provenance, predeclared analyses and transparent null findings.
-## v0.4 — reporting and independent QA
-- Generate validated tables and Word reports; independent methodological and source review.
-- Human approval before any academic submission.
+# THESHIT roadmap — System First
+Core modules: discovery, library/bibliography candidates, PDF extraction and OCR, evidence candidate/highlight, independent statistics, computed report and structural QA, end-to-end synthetic rehearsal.
+
+Before V1.0: combined CI and runtime baseline, live discovery smoke tests, real Thai publication benchmark using legally permitted public samples, semantic and full-document evidence audit, verified academic narrative templates, final Word/PDF rendering, private project controls, mobile UI/security review. Document gates and test results; do not label candidate functionality as fully validated.
+
+Pause all study-specific questionnaires, personnel registries and real intake until the core is independently reviewed and the actual study is authorized. Public software repository only. No synthetic data as real research.

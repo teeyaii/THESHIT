@@ -1,26 +1,26 @@
 # THESHIT
-AI-powered research automation and statistical analysis engine.
+General-purpose Research Operating System — Core First, Cloud First, Human Approval.
 
-## v0.2.1 — versioned synthetic codebook
-Generic four-construct, 14-item Likert demo. Independent random fixtures, not actual responses or a validated questionnaire. No real-data input in this version.
+## Synthetic core release candidate
+This public repository is generic software only. No real-data intake, personnel registry or project-specific questionnaire. Synthetic output is not field data or research evidence.
 
-## Run
-Python 3.11+:
+## Run locally or in GitHub Actions
+Python 3.11 on Linux is the reference environment:
 ```sh
 python -m pip install -r requirements-oss.txt
 python -m unittest discover -s tests -v
-python research_demo.py
+python theshit_cli.py demo --output outputs/SYNTHETIC_E2E
+python theshit_cli.py verify --output outputs/SYNTHETIC_E2E
 ```
-The generated outputs/SYNTHETIC_demo.json includes descriptive statistics, Cronbach's alpha, correlation, OLS and HC3 p-values. Retain negative, null and nonsignificant findings; never tune fixtures for desired findings.
+For mobile/cloud control after merge, open Actions → Synthetic end-to-end research demo → Run workflow, then download the explicitly labeled synthetic artifact.
 
-## Governance
-Public code only; keep participant data, unpublished documents, credentials and evidence in approved private storage. See AGENTS.md and docs/ROADMAP.md. A synthetic report is never research evidence. Human approval before merge and academic release.
+## Modules
+- Research Discovery: Crossref/OpenAlex metadata candidates (live API acceptance pending).
+- Literature Library: SQLite candidate variants, DOI grouping, review export.
+- Evidence: PDF candidate crops, hashes, source-color overlays and structural Word shading audit.
+- PDF text: native extraction and optional Tesseract Thai/English OCR.
+- Statistics: generic synthetic regression, diagnostics, explicit missingness and independent OLS/HC3 checks; legacy 14-item demo remains available.
+- Report: computed JSON, DOCX, XLSX and Markdown; structural table verification.
+- Core OSS CI: dependency lock candidate, hashes, package metadata and vulnerability scan.
 
-
-The draft schema is in config/demo_codebook.json. Reports include its SHA-256 and data audit. See docs/MASTER_PLAN.md for release gates. Actual questionnaire wording and demographic coding are not verified or included.
-
-## Open Source adapters
-See docs/OPEN_SOURCE.md for upstream credits, pinned direct dependencies, adapter functions and pending validation. Tests use only generated local fixtures.
-
-## Evidence Engine v0.3
-See docs/EVIDENCE_ENGINE.md for local candidate matching, cropped evidence images, hashed index, DOCX atlas and read-only Word paragraph location. No claim is automatically verified. Use only generated fixtures in public CI; actual source material stays private.
+Read docs/CORE_RELEASE_GATE.md for pending release gates. No automatic evidence verification, live study collection, Word visual QA or academic acceptance is claimed. Keep private materials out of the repo. Human approval before merge and release.
