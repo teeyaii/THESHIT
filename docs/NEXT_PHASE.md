@@ -34,4 +34,4 @@ Core baseline: main c5760d8b65666a4243f88f4b6b9f4c72ab854931 after PR #14 merge.
 Questionnaires, personnel registry, real-data ingestion and project-specific research are explicitly paused. Core-first, public code only. No paid infrastructure or service provisioning without owner approval. A new feature branch/PR per stage; CI is a software gate, not academic acceptance.
 
 ## RU MBA working profile update
-Target latest applicable 2569 guide (official listing verified, PDF contents unavailable); retain 2568 fallback values as provisional. Project chapter title 22 pt and no literature-age exclusion. See docs/RU_2569_WORKING_POLICY.md. Independent style and Word Desktop validation remain required.
+Use official 2569 guide (selected pages visually verified); template-dependent values remain provisional. Project chapter title 20 pt and no literature-age exclusion. See docs/RU_2569_WORKING_POLICY.md. Independent style and Word Desktop validation remain required.
