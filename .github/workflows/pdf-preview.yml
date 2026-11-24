@@ -1,0 +1,33 @@
+name: Synthetic PDF preview
+on:
+  pull_request:
+    paths:
+      - 'pdf_preview.py'
+      - 'tests/test_pdf_preview.py'
+      - 'academic_writing.py'
+      - '.github/workflows/pdf-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      THESHIT_REQUIRE_PDF_PREVIEW: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-writer fonts-noto-core fontconfig poppler-utils
+      - run: python -m pip install -r requirements-oss.txt
+      - run: python -m unittest discover -s tests -p test_pdf_preview.py -v
+      - run: python pdf_preview.py --output outputs/SYNTHETIC_PDF_PREVIEW
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SYNTHETIC-PDF-PREVIEW-NOT-WORD-FINALIZATION
+          path: outputs/SYNTHETIC_PDF_PREVIEW/
+          if-no-files-found: ignore
+          retention-days: 7
