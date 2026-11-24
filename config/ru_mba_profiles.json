@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "institution": "Ramkhamhaeng University",
+  "degree": "MBA",
+  "default_candidate": "ru_mba_campus_2568",
+  "final_approval": false,
+  "profiles": {
+    "ru_mba_campus_2568": {
+      "program": "MBA regional campus",
+      "source_url": "https://mba-campus.ru.ac.th/images/2025/Independent%20Research%20Guide%201-68.pdf",
+      "source_printed_pages": [
+        2,
+        6,
+        7,
+        8
+      ],
+      "paper_mm": [
+        210,
+        297
+      ],
+      "fonts": [
+        "Browallia New",
+        "Browallia UPC"
+      ],
+      "body": {
+        "font": "Browallia New",
+        "size_pt": 16,
+        "first_line_mm": 12.7
+      },
+      "margins_mm": {
+        "left": 38.1,
+        "right": 25.4,
+        "bottom": 25.4,
+        "top_by_role": {
+          "chapter_opening": 25.4,
+          "numbered_page": 38.1
+        }
+      },
+      "chapter_size_pt": null,
+      "chapter_size_candidates_pt": [
+        20,
+        22
+      ],
+      "heading_size_candidates_pt": [
+        20,
+        18
+      ],
+      "toc_title_pt": 22,
+      "toc_page_number_pt": 18,
+      "bibliography_pt": 18,
+      "appendix_divider_pt": 26,
+      "reference_style": "APA 7",
+      "unresolved": [
+        "chapter size: printed page 2 says 22, page 7 says 20",
+        "cover size: printed page 6 says 18, sample cover on page 25 uses multiple sizes",
+        "exact paragraph line spacing, before/after and alignment must be checked against approved template",
+        "top margin varies by page role; validate in Word",
+        "confirm edition/program with advisor"
+      ]
+    },
+    "ru_mba_excellence_bus7096": {
+      "program": "MBA Excellence",
+      "source_url": "https://excmba.ru.ac.th/thesis/bus7096.pdf",
+      "source_printed_pages": [
+        9
+      ],
+      "paper_mm": [
+        210,
+        297
+      ],
+      "fonts": [
+        "Browallia New",
+        "Browallia UPC"
+      ],
+      "body": {
+        "font": "Browallia New",
+        "size_pt": 16,
+        "first_line_mm": null
+      },
+      "margins_mm": {
+        "left": 38.1,
+        "right": 25.4,
+        "bottom": 25.4,
+        "top_by_role": {
+          "standard": 25.4
+        }
+      },
+      "chapter_size_pt": 24,
+      "heading_size_candidates_pt": [
+        22,
+        20,
+        18
+      ],
+      "reference_style": null,
+      "unresolved": [
+        "confirm current program edition and advisor template",
+        "first-line indent and other detailed styles not established from verified general requirements page"
+      ]
+    }
+  }
+}
