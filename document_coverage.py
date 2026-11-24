@@ -6,7 +6,7 @@ from zipfile import ZipFile
 from lxml import etree
 
 W="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-NS={"w":W}
+NS={"w":W,"mc":"http://schemas.openxmlformats.org/markup-compatibility/2006"}
 PART=re.compile(r"word/(?:document|header\d+|footer\d+|footnotes|endnotes)\.xml\Z")
 HEX=re.compile(r"[A-Fa-f0-9]{6}\Z")
 MAX_XML=32*1024*1024
@@ -35,7 +35,7 @@ def para_record(p,index,part):
         structural.append("NESTED_PARAGRAPH_CONTAINER")
     if p.xpath(".//w:ins | .//w:del | .//w:moveFrom | .//w:moveTo | .//w:fldSimple | .//w:fldChar | .//w:instrText",namespaces=NS):
         structural.append("TRACKED_CHANGE_OR_FIELD")
-    if p.xpath(".//w:alternateContent",namespaces=NS):
+    if p.xpath(".//mc:AlternateContent",namespaces=NS):
         structural.append("ALTERNATE_CONTENT")
     for r in p.xpath(".//w:r",namespaces=NS):
         if next(r.iterancestors(q("p")),None) is not p:
