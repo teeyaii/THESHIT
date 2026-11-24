@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "profile_status": "PROVISIONAL_UNAPPROVED",
+  "profile_id": "thai-academic-template-example",
+  "template_sha256": null,
+  "approved_by": null,
+  "approved_date": null,
+  "fonts": {
+    "thai": "Browallia New",
+    "latin": null,
+    "complex_script": "Browallia New",
+    "fallback_policy": "BLOCK_FINAL_IF_REQUIRED_FONT_MISSING",
+    "font_file_redistribution": false
+  },
+  "page": {
+    "paper": null,
+    "orientation": null,
+    "margin_mm": {
+      "top": null,
+      "bottom": null,
+      "left": null,
+      "right": null
+    },
+    "gutter_mm": null
+  },
+  "styles": {
+    "body": {
+      "size_pt": null,
+      "alignment": null,
+      "first_line_indent_mm": null,
+      "left_indent_mm": null,
+      "right_indent_mm": null,
+      "line_spacing_rule": null,
+      "line_spacing_value": null,
+      "space_before_pt": null,
+      "space_after_pt": null,
+      "widow_orphan_control": null
+    },
+    "chapter_heading": null,
+    "heading_1": null,
+    "heading_2": null,
+    "heading_3": null,
+    "table_text": null,
+    "caption": null,
+    "reference": null,
+    "footnote": null
+  },
+  "numbering": {
+    "front_matter": null,
+    "body": null,
+    "chapter": null,
+    "table": null,
+    "figure": null
+  },
+  "toc": {
+    "levels": null,
+    "update_in_word": true
+  },
+  "preservation": {
+    "source_text": true,
+    "approved_source_rgb_shading": true,
+    "comments_and_fields": true,
+    "table_structure": true
+  },
+  "required_visual_checks": [
+    "thai_glyphs_and_combining_marks",
+    "font_substitution",
+    "paragraph_and_heading_flow",
+    "page_breaks_and_orphans",
+    "tables_and_figures",
+    "toc_and_page_numbers",
+    "citations_and_bibliography",
+    "source_highlights",
+    "pdf_export_parity"
+  ],
+  "finalization": {
+    "required_engine": "Microsoft Word Desktop",
+    "actual_target_fonts_required": true,
+    "full_page_visual_review_required": true,
+    "preview_is_not_final": true
+  }
+}
