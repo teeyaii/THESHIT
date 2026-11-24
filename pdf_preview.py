@@ -1,6 +1,7 @@
 """Synthetic DOCX-to-PDF preview. LibreOffice is never Microsoft Word finalization."""
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -10,12 +11,14 @@ from pathlib import Path
 import pdfplumber
 from docx import Document
 from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 from docx.shared import Pt, Mm
 
 from academic_writing import draft, verify_draft
 from statistical_engine import LABEL
 
 FONT="Noto Sans Thai"
+LATIN_FONT="Noto Sans"
 PREVIEW="SYNTHETIC PREVIEW ONLY - NOT WORD FINALIZATION"
 
 def sha(path):
@@ -24,18 +27,30 @@ def sha(path):
 def norm(value):
     return "".join(c for c in unicodedata.normalize("NFKC",value) if not c.isspace())
 
-def apply_font(run,size):
-    run.font.name=FONT
+def apply_font(run,size,thai=False):
+    name=FONT if thai else LATIN_FONT
+    run.font.name=name
     run.font.size=Pt(size)
-    fonts=run._element.get_or_add_rPr().rFonts
+    pr=run._element.get_or_add_rPr()
     for attr in ("ascii","hAnsi","eastAsia","cs"):
-        fonts.set(qn("w:"+attr),FONT)
+        pr.rFonts.set(qn("w:"+attr),name)
+    sz=OxmlElement("w:szCs")
+    sz.set(qn("w:val"),str(round(size*2)))
+    pr.append(sz)
+    if thai:
+        cs=OxmlElement("w:cs")
+        pr.append(cs)
+        lang=OxmlElement("w:lang")
+        lang.set(qn("w:val"),"th-TH")
+        lang.set(qn("w:bidi"),"th-TH")
+        pr.append(lang)
 
 def line(doc,text,size=12):
     p=doc.add_paragraph()
     p.paragraph_format.space_after=Pt(6)
-    run=p.add_run(text)
-    apply_font(run,size)
+    for chunk in re.findall(r"[\u0e00-\u0e7f]+|[^\u0e00-\u0e7f]+",text):
+        thai="\u0e00"<=chunk[0]<="\u0e7f"
+        apply_font(p.add_run(chunk),size,thai=thai)
     return p
 
 def prepare_docx(report,path):
@@ -79,7 +94,15 @@ def inspect_pdf(path,expected):
             raise ValueError("PDF has no pages")
         text="\n".join(p.extract_text() or "" for p in pdf.pages)
         pages=len(pdf.pages)
-    flat=norm(text)
+    # Record pdfplumber mismatches separately; Poppler is the independent text gate.
+    plumber_flat=norm(text)
+    poppler=shutil.which("pdftotext")
+    if not poppler:
+        raise RuntimeError("BLOCKED: Poppler pdftotext unavailable")
+    extracted=subprocess.run([poppler,"-layout",str(source),"-"],capture_output=True,text=True,
+                             encoding="utf-8",errors="strict",check=True,timeout=30).stdout
+    flat=norm(extracted)
+    plumber_missing=[i for i,p in enumerate(expected["paragraphs"]) if norm(p) not in plumber_flat]
     markers=[m for m in expected["markers"] if norm(m) not in flat]
     missing_paragraphs=[i for i,p in enumerate(expected["paragraphs"]) if norm(p) not in flat]
     label_ok=norm(LABEL) in flat and norm(PREVIEW) in flat
@@ -89,6 +112,8 @@ def inspect_pdf(path,expected):
             "preview_labels_present":label_ok,"fact_markers_checked":len(expected["markers"]),
             "missing_fact_markers":markers,"paragraphs_checked":len(expected["paragraphs"]),
             "missing_paragraph_indices":missing_paragraphs,
+            "paragraph_text_extractor":"Poppler pdftotext -layout; NFKC and whitespace removed",
+            "pdfplumber_missing_paragraph_indices":plumber_missing,
             "fact_text_gate":label_ok and hash_ok and not markers,
             "paragraph_text_gate":not missing_paragraphs,
             "word_visual_qa":"NOT_EXECUTED","academic_acceptance":False}
@@ -101,8 +126,9 @@ def render_preview(report,output_dir,*,timeout=90):
     if not fc:
         raise RuntimeError("BLOCKED: fontconfig unavailable")
     match=subprocess.run([fc,"-f","%{family}",FONT],capture_output=True,text=True,check=True,timeout=10).stdout
-    if FONT not in match:
-        raise RuntimeError("BLOCKED: Noto Sans Thai not installed")
+    latin_match=subprocess.run([fc,"-f","%{family}",LATIN_FONT],capture_output=True,text=True,check=True,timeout=10).stdout
+    if FONT not in match or latin_match!=LATIN_FONT:
+        raise RuntimeError("BLOCKED: expected Thai and Latin fonts not installed")
     out=Path(output_dir).resolve()
     out.mkdir(parents=True,exist_ok=False)
     doc=out/"SYNTHETIC_preview.docx"
@@ -118,7 +144,7 @@ def render_preview(report,output_dir,*,timeout=90):
     if sha(doc)!=expected["docx_sha256"]:
         raise ValueError("DOCX source was modified by renderer")
     qa=inspect_pdf(pdf,expected)
-    qa.update(renderer=version,font_family=match,docx_sha256=expected["docx_sha256"],
+    qa.update(renderer=version,font_family=match,latin_font_family=latin_match,docx_sha256=expected["docx_sha256"],
               source_sha256=expected["source_sha256"],
               status="PREVIEW_TEXT_PASS" if qa["fact_text_gate"] and qa["paragraph_text_gate"]
                        else "PREVIEW_TEXT_REVIEW_REQUIRED")
@@ -138,7 +164,7 @@ def main():
     report=analyze(data,["x1","x2"],"y",source_label=LABEL)
     qa=render_preview(report,args.output)
     print(json.dumps(qa,indent=2))
-    return 0 if qa["fact_text_gate"] else 1
+    return 0 if qa["fact_text_gate"] and qa["paragraph_text_gate"] else 1
 
 if __name__=="__main__":
     raise SystemExit(main())
