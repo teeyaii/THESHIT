@@ -69,7 +69,7 @@ def openalex_record(item):
             "venue": source.get("display_name"), "landing_url": location.get("landing_page_url"),
             "source_record": item, "status": STATUS}
 
-def discover(query, provider="crossref", limit=10, fetch=request_json, api_key=None, mailto=None):
+def discover(query, provider="crossref", limit=10, fetch=request_json, api_key=None, mailto=None, allow_anonymous=False):
     """Explicit, bounded public-metadata query. No automatic network calls on import."""
     if not isinstance(query, str) or not query.strip() or len(query) > 500:
         raise ValueError("Query must contain 1–500 characters")
@@ -85,9 +85,10 @@ def discover(query, provider="crossref", limit=10, fetch=request_json, api_key=N
         convert = crossref_record
     elif provider == "openalex":
         key = api_key or os.getenv("OPENALEX_API_KEY")
-        if not key:
-            raise ValueError("OPENALEX_API_KEY required for OpenAlex adapter")
-        headers["Authorization"] = "Bearer " + key
+        if not key and not allow_anonymous:
+            raise ValueError("OPENALEX_API_KEY required unless anonymous trial explicitly enabled")
+        if key:
+            headers["Authorization"] = "Bearer " + key
         params = {"search": query.strip(), "per_page": limit}
         response = fetch("https://api.openalex.org/works?" + urlencode(params), headers)
         rows = response["results"]
