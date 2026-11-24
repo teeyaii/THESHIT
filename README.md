@@ -15,12 +15,12 @@ python theshit_cli.py verify --output outputs/SYNTHETIC_E2E
 For mobile/cloud control after merge, open Actions → Synthetic end-to-end research demo → Run workflow, then download the explicitly labeled synthetic artifact.
 
 ## Modules
-- Research Discovery: Crossref/OpenAlex metadata candidates (live API acceptance pending).
+- Research Discovery: Crossref/OpenAlex metadata candidates; fixed public-query connectivity smoke passed for both providers.
 - Literature Library: SQLite candidate variants, DOI grouping, review export.
 - Evidence: PDF candidate crops, hashes, source-color overlays and structural Word shading audit.
 - PDF text: native extraction and optional Tesseract Thai/English OCR.
 - Statistics: generic synthetic regression, diagnostics, explicit missingness and independent OLS/HC3 checks; legacy 14-item demo remains available.
 - Report: computed JSON, DOCX, XLSX and Markdown; structural table verification.
-- Core OSS CI: dependency lock candidate, hashes, package metadata and vulnerability scan.
+- Core OSS CI: 36-package Linux/Python 3.11 runtime version baseline, CI-generated hashed lock, metadata and advisory scan.
 
-Read docs/CORE_RELEASE_GATE.md for pending release gates. No automatic evidence verification, live study collection, Word visual QA or academic acceptance is claimed. Keep private materials out of the repo. Human approval before merge and release.
+Read docs/CORE_RELEASE_GATE.md for pending release gates and docs/NEXT_PHASE.md for the next implementation plan. No automatic evidence verification, live study collection, Word visual QA or academic acceptance is claimed. Keep private materials out of the repo. Human approval before merge and release.
