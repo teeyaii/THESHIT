@@ -1,0 +1,47 @@
+name: Combined RC verification
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  combined:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      THESHIT_REQUIRE_THAI_OCR: '1'
+      THESHIT_REQUIRE_PDF_PREVIEW: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libreoffice-writer poppler-utils tesseract-ocr tesseract-ocr-tha tesseract-ocr-eng fonts-noto-core fontconfig
+      - run: python -m pip install -r requirements-oss.txt -c requirements-core-linux-py311.constraints.txt
+      - run: python -m pip check
+      - run: python -m unittest discover -s tests -v
+      - run: python rc_verification.py demo --output outputs/SYNTHETIC_RC --commit "$(git rev-parse HEAD)" --pdf
+      - run: python rc_verification.py verify --output outputs/SYNTHETIC_RC
+      - uses: actions/upload-artifact@v4
+        with:
+          name: THESHIT-SYNTHETIC-RC-NOT-FOR-SUBMISSION
+          path: outputs/SYNTHETIC_RC/
+          retention-days: 7
+  public-probes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements-oss.txt -c requirements-core-linux-py311.constraints.txt
+      - run: python discovery_smoke.py --output outputs/public-smoke.json
+      - run: python thai_public_probe.py --output outputs/thai-public-pilot.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RC-public-probe-metrics-only
+          path: outputs/*.json
+          if-no-files-found: ignore
+          retention-days: 7
