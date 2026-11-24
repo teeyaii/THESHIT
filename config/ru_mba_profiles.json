@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "institution": "Ramkhamhaeng University",
   "degree": "MBA",
   "default_candidate": "ru_mba_campus_2569_working",
@@ -99,12 +99,12 @@
     },
     "ru_mba_campus_2569_working": {
       "program": "MBA regional campus — working profile",
-      "source_url": "https://mba-campus.ru.ac.th/images/2025/Independent%20Research%20Guide%201-68.pdf",
+      "source_url": "https://drive.google.com/file/d/1jNSYUkPM5QWxQ9F9nZgfeJ0A6NftXkHs/view?usp=sharing",
       "source_printed_pages": [
-        2,
-        6,
-        7,
-        8
+        4,
+        8,
+        9,
+        22
       ],
       "paper_mm": [
         210,
@@ -143,23 +143,46 @@
       "appendix_divider_pt": 26,
       "reference_style": "APA 7",
       "unresolved": [
-        "2569 manual listed but full PDF unavailable to inspection; remaining values provisionally inherited from verified 2568 baseline",
-        "22 pt chapter working decision resolves project choice, not a claim of 2569 official requirement",
-        "cover variants and exact line/paragraph spacing must be checked against approved template",
-        "top margin varies by page role; validate in Word"
+        "printed p4 specifies chapter 22 regular; p9 specifies 20; owner selects 22",
+        "approved cohort Word template 1-69 not retrieved; 1-68 template is historical",
+        "paragraph spacing, exact cover and section-specific pagination require template and Word visual review",
+        "AI disclosure form must be completed truthfully by student following current program policy; not generated as consent"
       ],
       "latest_guide_url": "https://drive.google.com/file/d/1jNSYUkPM5QWxQ9F9nZgfeJ0A6NftXkHs/view?usp=sharing",
       "official_listing_url": "https://mba-campus.ru.ac.th/index.php",
-      "latest_guide_status": "LISTED_2569_CONTENT_NOT_VERIFIED",
-      "baseline_source_year_be": 2568,
+      "latest_guide_status": "2569_SELECTED_PAGES_VISUALLY_VERIFIED",
+      "baseline_source_year_be": 2569,
       "target_year_be": 2569,
-      "chapter_size_basis": "OWNER_WORKING_DECISION_2026_11_24",
+      "chapter_size_basis": "2569_P4_AND_OWNER_DECISION_P9_CONFLICT",
       "literature_policy": {
         "max_age_years": null,
         "age_is_exclusion": false,
         "basis": "OWNER_REPORTS_ADVISOR_CONSULTATION_2026_11_24",
         "selection": "relevance, quality, source verification; recent work when useful"
-      }
+      },
+      "source_sha256": "11d970ddb0d05905fbf1003102d177f8019201e75dc1bc427f0054bbce4c8783",
+      "source_physical_pages": [
+        6,
+        10,
+        11,
+        24
+      ],
+      "chapter_bold": false,
+      "body_bold": false,
+      "heading_bold": false,
+      "heading_sizes_pt": [
+        20,
+        18
+      ],
+      "cover_general_pt": 18,
+      "toc_lists": [
+        "contents",
+        "tables",
+        "figures"
+      ],
+      "abstract_recommended_max_pages": 1,
+      "chapter_title_separate_line": true,
+      "ai_disclosure_form_listed": true
     }
   }
 }
