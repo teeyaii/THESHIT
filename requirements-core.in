@@ -1,0 +1,4 @@
+-r requirements-oss.txt
+# Include bootstrap packages in the hashed runtime lock; minimum fixes from run 45322753156.
+pip>=26.2
+setuptools>=84.1.0

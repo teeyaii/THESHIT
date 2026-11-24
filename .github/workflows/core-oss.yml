@@ -1,0 +1,49 @@
+name: Core OSS integration
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Create separate tooling and runtime environments
+        run: |
+          python -m venv /tmp/theshit-tools
+          python -m venv /tmp/theshit-runtime
+          /tmp/theshit-tools/bin/python -m pip install 'pip-tools==7.5.0' 'pip-audit==2.9.0'
+          mkdir -p core-qa
+      - name: Resolve hashed lock candidate
+        run: |
+          /tmp/theshit-tools/bin/pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file=core-qa/requirements-core-linux-py311.lock requirements-core.in
+      - name: Install and check runtime
+        run: |
+          /tmp/theshit-runtime/bin/python -m pip install --require-hashes -r core-qa/requirements-core-linux-py311.lock
+          /tmp/theshit-runtime/bin/python -m pip check
+      - name: Integration and regression tests
+        run: |
+          /tmp/theshit-runtime/bin/python -m unittest discover -s tests -v
+          /tmp/theshit-runtime/bin/python research_demo.py
+      - name: Runtime dependency and license metadata
+        run: |
+          /tmp/theshit-runtime/bin/python -c 'import json,core_oss; print(json.dumps(core_oss.dependency_inventory(), indent=2))' > core-qa/dependency-inventory.json
+      - name: Vulnerability audit
+        run: |
+          site_dir=$(/tmp/theshit-runtime/bin/python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')
+          /tmp/theshit-tools/bin/pip-audit --path "$site_dir" --format json --output core-qa/vulnerability-audit.json
+      - name: Upload dependency QA artifacts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-oss-dependency-qa
+          path: core-qa/
+          if-no-files-found: ignore
+          retention-days: 7
