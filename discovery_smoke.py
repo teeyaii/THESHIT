@@ -16,14 +16,19 @@ def smoke(fetch=None):
             kwargs["allow_anonymous"]=True
         try:
             rows=discover(QUERY,**kwargs)
-            if not rows or not all(r["provider"]==provider and r["status"]==STATUS for r in rows):
-                raise ValueError("Unexpected metadata")
+            if not rows:
+                results[provider]={"status":"BLOCKED_OR_FAILED","reason":"NO_RESULTS"}
+                continue
+            if not all(r["provider"]==provider and r["status"]==STATUS for r in rows):
+                results[provider]={"status":"BLOCKED_OR_FAILED","reason":"UNEXPECTED_METADATA"}
+                continue
             if not any(r.get("title") and normalize_doi(r.get("doi")) for r in rows):
-                raise ValueError("No title and DOI metadata pair")
+                results[provider]={"status":"BLOCKED_OR_FAILED","reason":"NO_TITLE_DOI_PAIR","count":len(rows)}
+                continue
             results[provider]={"status":"PASS","count":len(rows),
                                "title_doi_pairs":sum(bool(r.get("title") and normalize_doi(r.get("doi"))) for r in rows)}
         except (RuntimeError,ValueError,KeyError,TypeError,OSError) as exc:
-            results[provider]={"status":"BLOCKED_OR_FAILED","error_type":type(exc).__name__}
+            results[provider]={"status":"BLOCKED_OR_FAILED","reason":"PROVIDER_OR_SCHEMA_ERROR","error_type":type(exc).__name__}
     return {"mode":"MOCK" if fetch is not None else "LIVE_PUBLIC_METADATA",
             "providers":results,"limitations":"Connectivity and metadata shape only; no claim or full text verified."}
 
