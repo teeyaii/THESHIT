@@ -1,7 +1,7 @@
 # THESHIT
 AI-powered research automation and statistical analysis engine.
 
-## v0.1 — synthetic sandbox
+## v0.2 — versioned synthetic codebook
 Generic four-construct, 14-item Likert demo. Independent random fixtures, not actual responses or a validated questionnaire. No real-data input in this version.
 
 ## Run
@@ -15,3 +15,6 @@ The generated outputs/SYNTHETIC_demo.json includes descriptive statistics, Cronb
 
 ## Governance
 Public code only; keep participant data, unpublished documents, credentials and evidence in approved private storage. See AGENTS.md and docs/ROADMAP.md. A synthetic report is never research evidence. Human approval before merge and academic release.
+
+
+The draft schema is in config/demo_codebook.json. Reports include its SHA-256 and data audit. See docs/MASTER_PLAN.md for release gates. Actual questionnaire wording and demographic coding are not verified or included.

@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-GROUPS = {"PE": 3, "EE": 4, "SI": 4, "BI": 3}
-ITEMS = {g: [f"{g}{i+1}" for i in range(k)] for g, k in GROUPS.items()}
+from codebook import load_codebook, audit
+
+BOOK, ITEMS, CODEBOOK_SHA = load_codebook()
 LABEL = "SYNTHETIC - NOT RESEARCH EVIDENCE"
 
 def fixture(n=100, seed=42):
@@ -19,11 +20,10 @@ def fixture(n=100, seed=42):
     return pd.DataFrame(rng.integers(1, 6, (n, len(columns))), columns=columns)
 
 def validate(df):
-    expected = [c for group in ITEMS.values() for c in group]
-    if list(df.columns) != expected or len(df) < 10:
-        raise ValueError("Unexpected schema or sample size")
-    if not df.isin([1, 2, 3, 4, 5]).all().all():
-        raise ValueError("Complete integer Likert 1–5 values required")
+    result = audit(df, ITEMS)
+    if not result["passed"]:
+        raise ValueError(f"Demo data audit failed: {result}")
+    return result
 
 def alpha(items):
     k = items.shape[1]
@@ -32,7 +32,7 @@ def alpha(items):
 
 def run_demo(n=100, seed=42):
     df = fixture(n, seed)
-    validate(df)
+    data_audit = validate(df)
     scores = pd.DataFrame({g: df[cols].mean(axis=1) for g, cols in ITEMS.items()})
     x = sm.add_constant(scores[["PE", "EE", "SI"]])
     if np.linalg.matrix_rank(x) != x.shape[1] or scores.BI.var() == 0:
@@ -41,6 +41,8 @@ def run_demo(n=100, seed=42):
     robust = ols.get_robustcov_results(cov_type="HC3")
     return {"label": LABEL, "source": "independent uniform synthetic fixture",
             "seed": seed, "n": n,
+            "codebook_version": BOOK["version"], "codebook_sha256": CODEBOOK_SHA,
+            "data_audit": data_audit,
             "descriptive": scores.describe().to_dict(),
             "alpha": {g: alpha(df[cols]) for g, cols in ITEMS.items()},
             "correlation": scores.corr().to_dict(),
