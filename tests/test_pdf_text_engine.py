@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
-from pdf_text_engine import extract_pdf,ocr_capabilities,parse_tsv,sha
+from pdf_text_engine import extract_pdf,ocr_capabilities,parse_tsv,sha,OCRConfigurationError
 from test_oss_adapters import tiny_pdf
 
 class PDFTextTests(unittest.TestCase):
@@ -49,3 +49,52 @@ class PDFTextTests(unittest.TestCase):
             self.assertIn("ภาษาไทย",r["pages"][0]["text"].replace(" ",""))
             self.assertTrue(r["pages"][0]["words"])
             self.assertEqual(r["source_sha256"],sha(path))
+
+    def test_codex_s3_invalid_header_distinguished_from_empty_page(self):
+        for value in ("","ภาษาไทย\n","level\ttext\n5\tfoo\n"):
+            with self.assertRaises(OCRConfigurationError):parse_tsv(value)
+        header="level\tleft\ttop\twidth\theight\tconf\ttext\n"
+        self.assertEqual(parse_tsv(header),[])
+        with self.assertRaisesRegex(ValueError,"Malformed"):
+            parse_tsv(header+"5\t2\t3\n")
+
+    def test_r41_01_word_confidence_boundaries(self):
+        header="level\tleft\ttop\twidth\theight\tconf\ttext\n"
+        # Tesseract non-word structural rows commonly have confidence -1.
+        self.assertEqual(parse_tsv(header+"1\t0\t0\t10\t12\t-1\t\n"),[])
+        self.assertEqual(parse_tsv(header+"5\t2\t3\t10\t12\t-1\t\n"),[])
+        for value in ("0","100","92.1"):
+            with self.subTest(value=value):
+                words=parse_tsv(header+"5\t2\t3\t10\t12\t"+value+"\tword\n")
+                self.assertEqual(words[0]["confidence"],float(value))
+        for value in ("150","100.01","-0.01","-1","nan","inf","-inf","1e309"):
+            with self.subTest(value=value),self.assertRaisesRegex(ValueError,"Invalid OCR word confidence"):
+                parse_tsv(header+"5\t2\t3\t10\t12\t"+value+"\tword\n")
+
+    @unittest.skipUnless(os.name=="posix","Executable fixture uses POSIX shell")
+    def test_r41_01_extract_entrypoint_rejects_invalid_confidence(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);path=root/"fixture.pdf";tiny_pdf(path);before=sha(path)
+            binary=root/"tesseract"
+            binary.write_text(
+                "#!/bin/sh\n"
+                "case \"$1\" in\n"
+                " --version) echo 'tesseract test fixture';;\n"
+                " --list-langs) printf 'List of available languages (2):\\neng\\ntha\\n';;\n"
+                " *) printf 'level\\tleft\\ttop\\twidth\\theight\\tconf\\ttext\\n5\\t2\\t3\\t10\\t12\\t95\\tvalid\\n5\\t2\\t3\\t10\\t12\\t%s\\tword\\n' \"$THESHIT_TEST_CONF\";;\n"
+                "esac\n",encoding="utf-8")
+            binary.chmod(0o755)
+            for value in ("150","-1","nan","inf","-inf","100","0"):
+                with self.subTest(value=value),patch.dict(os.environ,{"PATH":str(root)+os.pathsep+os.environ.get("PATH",""),"THESHIT_TEST_CONF":value}):
+                    result=extract_pdf(path,force_ocr=True)
+                    row=result["pages"][0]
+                    if value in ("100","0"):
+                        self.assertEqual(row["status"],"OCR_CANDIDATE_UNVERIFIED")
+                        self.assertEqual(row["words"][1]["confidence"],float(value))
+                    else:
+                        self.assertEqual(row["status"],"OCR_EXTRACTION_ERROR")
+                        self.assertEqual(row["words"],[])
+                        self.assertEqual(row["text"],"")
+                    self.assertEqual(result["source_sha256"],before)
+                    self.assertEqual(sha(path),before)

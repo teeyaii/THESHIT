@@ -19,8 +19,13 @@ jobs:
         run: |
           python -m venv /tmp/theshit-tools
           python -m venv /tmp/theshit-runtime
-          /tmp/theshit-tools/bin/python -m pip install 'pip-tools==7.5.0' 'pip-audit==2.9.0'
+          # Codex S2: pin compatible lock-generation tooling, not runtime pip.
+          /tmp/theshit-tools/bin/python -m pip install 'pip==24.3.1'
+          /tmp/theshit-tools/bin/python -m pip install 'pip==24.3.1' 'pip-tools==7.5.0' 'pip-audit==2.9.0'
+          /tmp/theshit-tools/bin/python -c 'import importlib.metadata as m; assert m.version("pip")=="24.3.1"; assert m.version("pip-tools")=="7.5.0"; assert m.version("pip-audit")=="2.9.0"'
+          /tmp/theshit-tools/bin/python -m pip check
           mkdir -p core-qa
+          /tmp/theshit-tools/bin/python -m pip freeze --all > core-qa/tooling-inventory.txt
       - name: Resolve hashed lock candidate
         run: |
           /tmp/theshit-tools/bin/pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file=core-qa/requirements-core-linux-py311.lock requirements-core.in
