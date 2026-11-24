@@ -1,0 +1,28 @@
+name: Synthetic mobile dashboard artifact
+on:
+  pull_request:
+    paths:
+      - 'mobile_dashboard.py'
+      - 'tests/test_mobile_dashboard.py'
+      - '.github/workflows/mobile-dashboard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements-oss.txt
+      - run: python -m unittest discover -s tests -p test_mobile_dashboard.py -v
+      - run: python theshit_cli.py demo --output outputs/SYNTHETIC_DASHBOARD_DEMO
+      - run: python mobile_dashboard.py --bundle outputs/SYNTHETIC_DASHBOARD_DEMO --output outputs/dashboard/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: THESHIT-OFFLINE-SYNTHETIC-DASHBOARD
+          path: outputs/dashboard/index.html
+          retention-days: 7
