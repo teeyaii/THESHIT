@@ -1,11 +1,11 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "profile_id": "RU_ARTICLE_SYNTHETIC_EXAMPLE",
   "status": "SYNTHETIC_LAYOUT_ONLY",
   "official_article_template_verified": false,
   "source_template_sha256": null,
   "source_template_url": null,
-  "notes": "Separate from the IS full-volume profile. Do not treat sample sizes, margins or spacing as official 2569 article requirements.",
+  "notes": "Margins and section order verified from 2569 manual p22; example-only font sizes and line spacing until current article template verified.",
   "font": "Browallia New",
   "body_pt": 16,
   "title_pt": 22,
@@ -14,6 +14,33 @@
     210,
     297
   ],
-  "margin_mm": 25.4,
-  "line_spacing": 1
+  "line_spacing": 1,
+  "source_manual_sha256": "11d970ddb0d05905fbf1003102d177f8019201e75dc1bc427f0054bbce4c8783",
+  "source_manual_printed_page": 22,
+  "margins_mm": {
+    "top": 25.4,
+    "bottom": 25.4,
+    "left": 38.1,
+    "right": 25.4
+  },
+  "recommended_page_range": [
+    10,
+    12
+  ],
+  "abstract_recommended_max_pages": 1,
+  "section_order": [
+    "ชื่อเรื่องภาษาไทย ภาษาอังกฤษ",
+    "บทคัดย่อ และ ABSTRACT",
+    "ความเป็นมาและความสำคัญของปัญหา",
+    "วัตถุประสงค์การวิจัย",
+    "สมมติฐานการวิจัย",
+    "ขอบเขตของการวิจัย",
+    "แนวคิด ทฤษฎี และงานวิจัยที่เกี่ยวข้อง",
+    "วิธีการดำเนินการวิจัย",
+    "การวิเคราะห์ข้อมูล",
+    "ผลการวิจัย",
+    "อภิปรายผล",
+    "ข้อเสนอแนะ",
+    "เอกสารอ้างอิง"
+  ]
 }
