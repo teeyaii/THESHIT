@@ -7,7 +7,7 @@ from docx.oxml.ns import qn
 from ru_format_audit import get_profile, paragraph_property, property_nodes, font_value, size_value
 
 PROFILE="ru_mba_campus_2569_working"
-ROLES={"body","chapter","heading","table","caption","bibliography","toc_title","appendix_divider"}
+ROLES={"body","chapter","heading","table","caption","bibliography","toc_title","appendix_divider","heading1","heading2","front_title","bibliography_title","fixture_notice"}
 PARAGRAPH_FIELDS={"alignment","first_line_indent","left_indent","right_indent",
                   "space_before","space_after","line_spacing","line_spacing_rule",
                   "keep_with_next","keep_together","page_break_before","widow_control"}
@@ -26,6 +26,13 @@ def role_rules(profile,role):
     size={"body":profile["body"]["size_pt"],"chapter":profile["chapter_size_pt"],
           "bibliography":profile.get("bibliography_pt"),"toc_title":profile.get("toc_title_pt"),
           "appendix_divider":profile.get("appendix_divider_pt")}.get(role)
+    levels=profile.get("heading_sizes_pt")
+    if role in ("heading1","heading2") and levels:
+        size=levels[0 if role=="heading1" else 1]
+    if role=="bibliography_title":
+        size=profile.get("bibliography_pt")
+    if role=="fixture_notice":
+        size=profile["body"]["size_pt"]
     rules={"size_pt":size,"font":profile["body"]["font"]}
     if role=="body" and profile["body"]["first_line_mm"] is not None:
         rules["paragraph"]={"first_line_indent":profile["body"]["first_line_mm"]*72/25.4}
@@ -77,6 +84,12 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
                 compare(rloc,"font_"+slot,font_value(nodes,slot),rules["font"])
             for tag in (["szCs"] if thai else [])+(["sz"] if latin or not thai else []):
                 compare(rloc,tag,size_value(nodes,tag),rules["size_pt"])
+                if role in ("table","caption") and rules["size_pt"] is None:
+                    checks[-1]["reason"]="RU 2569 p9 allows smaller than 16 pt as appropriate; exact size and legibility require template/visual review."
+                elif role=="front_title" and rules["size_pt"] is None:
+                    checks[-1]["reason"]="Front-matter role is not necessarily a TOC heading; exact title size requires approved template."
+                elif role=="fixture_notice":
+                    checks[-1]["basis"]="SYNTHETIC_FIXTURE_CONVENTION_NOT_UNIVERSITY_RULE"
     def tables(items,prefix):
         for ti,t in enumerate(items):
             for ri,row in enumerate(t.rows):

@@ -20,6 +20,8 @@ class RUThesisTests(unittest.TestCase):
             self.assertFalse(doc.styles["RU Chapter"].font.bold)
             self.assertEqual(doc.styles["RU Subheading"].font.size.pt,20)
             self.assertEqual(doc.styles["RU Subheading 2"].font.size.pt,18)
+            self.assertEqual(doc.styles["RU TOC Title"].font.size.pt,22)
+            self.assertEqual(doc.styles["RU Bibliography Title"].font.size.pt,18)
             self.assertIn("สารบัญตาราง",[p.text for p in doc.paragraphs])
             self.assertIn("สารบัญภาพ",[p.text for p in doc.paragraphs])
             self.assertIn("คำปฏิญาณตน",[p.text for p in doc.paragraphs])
