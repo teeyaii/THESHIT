@@ -1,0 +1,51 @@
+{
+  "version": "0.2-draft",
+  "status": "DEMO_ONLY_UNVERIFIED",
+  "scale": {
+    "min": 1,
+    "max": 5
+  },
+  "missing_policy": "reject_for_demo",
+  "constructs": [
+    {
+      "id": "PE",
+      "role": "predictor",
+      "items": [
+        "PE1",
+        "PE2",
+        "PE3"
+      ]
+    },
+    {
+      "id": "EE",
+      "role": "predictor",
+      "items": [
+        "EE1",
+        "EE2",
+        "EE3",
+        "EE4"
+      ]
+    },
+    {
+      "id": "SI",
+      "role": "predictor",
+      "items": [
+        "SI1",
+        "SI2",
+        "SI3",
+        "SI4"
+      ]
+    },
+    {
+      "id": "BI",
+      "role": "outcome",
+      "items": [
+        "BI1",
+        "BI2",
+        "BI3"
+      ]
+    }
+  ],
+  "real_data_enabled": false,
+  "notes": "Item identifiers only. Wording, reverse coding, demographics and missing-data rules require source verification and human approval."
+}
