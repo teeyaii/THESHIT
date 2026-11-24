@@ -28,6 +28,7 @@ jobs:
         run: |
           /tmp/theshit-runtime/bin/python -m pip install --require-hashes -r core-qa/requirements-core-linux-py311.lock
           /tmp/theshit-runtime/bin/python -m pip check
+          /tmp/theshit-runtime/bin/python check_runtime_pins.py > core-qa/runtime-pin-check.json
       - name: Integration and regression tests
         run: |
           /tmp/theshit-runtime/bin/python -m unittest discover -s tests -v

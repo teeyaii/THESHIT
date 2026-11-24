@@ -1,3 +1,4 @@
+-c requirements-core-linux-py311.constraints.txt
 -r requirements-oss.txt
 # Include bootstrap packages in the hashed runtime lock; minimum fixes from run 45322753156.
 pip>=26.2
