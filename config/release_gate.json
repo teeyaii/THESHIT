@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "target": "V1.0",
+  "scope": "CORE_SOFTWARE_AND_RU_DOCUMENT_WORKFLOW",
+  "required_gates": [
+    "combined_ci",
+    "dependency_license_native_review",
+    "thai_public_benchmark",
+    "source_semantic_review",
+    "ru_2569_manual_and_template",
+    "ru_article_template",
+    "complex_manuscript_preservation",
+    "word_desktop_visual_qa",
+    "mobile_browser_visual_qa",
+    "independent_codex_reproduction",
+    "independent_claude_academic_review",
+    "owner_release_approval"
+  ],
+  "statuses": [
+    "PASS",
+    "FAIL",
+    "BLOCKED",
+    "NOT_EXECUTED"
+  ],
+  "real_data_enabled": false,
+  "notes": "No synthetic outcome constitutes field research; gate records are attestations and require actual evidence."
+}
