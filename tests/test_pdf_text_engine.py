@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
-from pdf_text_engine import extract_pdf,ocr_capabilities,parse_tsv,sha
+from pdf_text_engine import extract_pdf,ocr_capabilities,parse_tsv,sha,OCRConfigurationError
 from test_oss_adapters import tiny_pdf
 
 class PDFTextTests(unittest.TestCase):
@@ -49,3 +49,11 @@ class PDFTextTests(unittest.TestCase):
             self.assertIn("ภาษาไทย",r["pages"][0]["text"].replace(" ",""))
             self.assertTrue(r["pages"][0]["words"])
             self.assertEqual(r["source_sha256"],sha(path))
+
+    def test_codex_s3_invalid_header_distinguished_from_empty_page(self):
+        for value in ("","ภาษาไทย\n","level\ttext\n5\tfoo\n"):
+            with self.assertRaises(OCRConfigurationError):parse_tsv(value)
+        header="level\tleft\ttop\twidth\theight\tconf\ttext\n"
+        self.assertEqual(parse_tsv(header),[])
+        with self.assertRaisesRegex(ValueError,"Malformed"):
+            parse_tsv(header+"5\t2\t3\n")
