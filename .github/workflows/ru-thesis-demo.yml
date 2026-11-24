@@ -1,0 +1,29 @@
+name: RU synthetic thesis structure
+on:
+  pull_request:
+    paths:
+      - 'ru_thesis_builder.py'
+      - 'tests/test_ru_thesis_builder.py'
+      - 'config/ru_mba_profiles.json'
+      - '.github/workflows/ru-thesis-demo.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements-oss.txt
+      - run: python -m unittest discover -s tests -p test_ru_thesis_builder.py -v
+      - run: python ru_thesis_builder.py demo --output outputs/SYNTHETIC_RU
+      - run: python ru_thesis_builder.py verify --output outputs/SYNTHETIC_RU
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SYNTHETIC-RU-STRUCTURE-NOT-FOR-SUBMISSION
+          path: outputs/SYNTHETIC_RU/
+          retention-days: 7
