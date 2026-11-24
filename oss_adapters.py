@@ -1,6 +1,5 @@
 """Local adapters. CI uses generated fixtures only; never upload private data."""
 from pathlib import Path
-import hashlib
 import importlib.metadata as metadata
 
 import pandas as pd
@@ -10,6 +9,7 @@ import pyreadstat
 from docx import Document
 from codebook import load_codebook, audit
 from research_demo import LABEL, fixture, run_demo
+from pdf_limits import check_pdf, checked_pages, stream_digest, run_bounded, ResourceLimitError, MAX_MATCHES
 
 def dependency_versions():
     return {name: metadata.version(name) for name in
@@ -26,20 +26,26 @@ def validate_fixture(df):
     return schema.validate(df)
 
 def pdf_text_matches(path, phrase):
+    path=check_pdf(path)
+    return run_bounded("matches",{"path":str(path),"phrase":phrase})
+
+def _pdf_text_matches(path, phrase):
     """Return candidate evidence coordinates, not verified claim support.
     Text-layer PDF only. Page number is physical, one-based.
     """
-    if not phrase.strip():
+    if not isinstance(phrase,str) or not phrase.strip() or len(phrase)>10000:
         raise ValueError("Nonempty search phrase required")
-    path = Path(path)
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    path = check_pdf(path)
+    digest = stream_digest(path)
     matches = []
     with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
+        for page in checked_pages(pdf):
             for hit in page.search(phrase, regex=False, return_chars=False) or []:
+                if len(matches)>=MAX_MATCHES:raise ResourceLimitError("PDF match limit exceeded")
                 matches.append({"page": page.page_number, "text": hit["text"],
                     "bbox": [hit[k] for k in ("x0", "top", "x1", "bottom")],
                     "source_sha256": digest, "status": "CANDIDATE_UNVERIFIED"})
+    if stream_digest(check_pdf(path))!=digest:raise ValueError("Source changed during extraction")
     return matches
 
 def export_demo_sav(path, n=100, seed=42):
