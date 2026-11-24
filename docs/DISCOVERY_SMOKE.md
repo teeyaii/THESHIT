@@ -1,0 +1,6 @@
+# Public API connectivity smoke
+One small fixed generic query per provider, no user text, no credentials required for the anonymous trial. OpenAlex bearer token remains supported for deliberate runtime use, per https://help.openalex.org/api/authentication/; Crossref public access is documented at https://www.crossref.org/documentation/retrieve-metadata/rest-api/access-and-authentication/.
+
+Run python discovery_smoke.py --output outputs/public-smoke.json or the dedicated GitHub Actions workflow. Result records metadata shape and count only; no raw provider payload, email, or key is exported. Provider failure/rate limit is BLOCKED_OR_FAILED and exits nonzero. No automatic retry or paid usage. A live success is connectivity validation only, not a claim verification, rights clearance or full-text test. Never send private research topics or personal details from public CI.
+
+Unfiltered anonymous OpenAlex returned two records without a title+DOI pair (run 45325022600). The OpenAlex smoke now explicitly requests works with a DOI using the documented `has_doi:true` filter (https://help.openalex.org/data/works/dois/). Normal discovery remains unfiltered unless explicitly selected. Acceptance still requires a title and valid DOI; no guarantee that the API returns matching records.
