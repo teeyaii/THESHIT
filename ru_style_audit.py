@@ -1,0 +1,127 @@
+"""Read-only RU role/style inventory, with explicit template-dependent checks."""
+import hashlib
+import json
+from pathlib import Path
+from docx import Document
+from docx.oxml.ns import qn
+from ru_format_audit import get_profile, paragraph_property, property_nodes, font_value, size_value
+
+PROFILE="ru_mba_campus_2569_working"
+ROLES={"body","chapter","heading","table","caption","bibliography","toc_title","appendix_divider"}
+PARAGRAPH_FIELDS={"alignment","first_line_indent","left_indent","right_indent",
+                  "space_before","space_after","line_spacing","line_spacing_rule",
+                  "keep_with_next","keep_together","page_break_before","widow_control"}
+
+def style_value(p,key):
+    value=paragraph_property(p,key)
+    if value is None:
+        return None
+    if key in {"alignment","line_spacing_rule"}:
+        return int(value)
+    if hasattr(value,"pt"):
+        return round(value.pt,4)
+    return value
+
+def role_rules(profile,role):
+    size={"body":profile["body"]["size_pt"],"chapter":profile["chapter_size_pt"],
+          "bibliography":profile.get("bibliography_pt"),"toc_title":profile.get("toc_title_pt"),
+          "appendix_divider":profile.get("appendix_divider_pt")}.get(role)
+    rules={"size_pt":size,"font":profile["body"]["font"]}
+    if role=="body" and profile["body"]["first_line_mm"] is not None:
+        rules["paragraph"]={"first_line_indent":profile["body"]["first_line_mm"]*72/25.4}
+    else:
+        rules["paragraph"]={}
+    return rules
+
+def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
+    """Classify paragraph styles explicitly; missing classifications are unresolved."""
+    if not isinstance(role_by_style,dict) or not role_by_style or set(role_by_style.values())-ROLES:
+        raise ValueError("Explicit supported style-role mapping required")
+    template_rules=template_rules or {}
+    if set(template_rules)-ROLES or any(set(v)-PARAGRAPH_FIELDS for v in template_rules.values()):
+        raise ValueError("Unsupported paragraph template rule")
+    profile=get_profile(profile_id)
+    p=Path(path);before=hashlib.sha256(p.read_bytes()).hexdigest()
+    doc=Document(p);checks=[];inventory=[];seen=set()
+    def compare(loc,field,actual,expected):
+        if actual is None or expected is None:
+            status="UNRESOLVED"
+        elif isinstance(expected,(int,float)) and not isinstance(expected,bool):
+            status="PASS" if isinstance(actual,(int,float)) and abs(actual-expected)<=0.05 else "FAIL"
+        else:
+            status="PASS" if actual==expected else "FAIL"
+        checks.append({"location":loc,"field":field,"actual":actual,"expected":expected,"status":status})
+    def paragraph(p,loc):
+        if not p.text.strip():
+            return
+        role=role_by_style.get(p.style.style_id)
+        values={k:style_value(p,k) for k in sorted(PARAGRAPH_FIELDS)}
+        inventory.append({"location":loc,"style":p.style.style_id,"role":role,"paragraph_properties":values})
+        if role is None:
+            compare(loc,"style_classification",None,"explicit role")
+            return
+        rules=role_rules(profile,role)
+        expected={**template_rules.get(role,{}),**rules["paragraph"]}
+        for field,target in expected.items():
+            compare(loc,field,values[field],target)
+        if "".join(r.text for r in p.runs)!=p.text:
+            compare(loc,"complex_runs",None,"manual review")
+        for i,r in enumerate(p.runs):
+            if not r.text.strip():
+                continue
+            nodes=list(property_nodes(r,p))
+            thai=any("\u0e00"<=c<="\u0e7f" for c in r.text)
+            latin=any(c.isascii() and c.isalnum() for c in r.text)
+            rloc=f"{loc}/run:{i}"
+            for slot in (["cs"] if thai else [])+(["ascii","hAnsi"] if latin or not thai else []):
+                compare(rloc,"font_"+slot,font_value(nodes,slot),rules["font"])
+            for tag in (["szCs"] if thai else [])+(["sz"] if latin or not thai else []):
+                compare(rloc,tag,size_value(nodes,tag),rules["size_pt"])
+    def tables(items,prefix):
+        for ti,t in enumerate(items):
+            for ri,row in enumerate(t.rows):
+                for ci,cell in enumerate(row.cells):
+                    if cell._tc in seen:
+                        continue
+                    seen.add(cell._tc)
+                    loc=f"{prefix}/table:{ti}/row:{ri}/cell:{ci}"
+                    for pi,p in enumerate(cell.paragraphs):
+                        paragraph(p,f"{loc}/p:{pi}")
+                    tables(cell.tables,loc)
+    for i,p0 in enumerate(doc.paragraphs):
+        paragraph(p0,f"body/p:{i}")
+    tables(doc.tables,"body")
+    if not inventory:
+        raise ValueError("No nonempty paragraph inventory")
+    fields=[]
+    for elem in doc._element.iter(qn("w:instrText")):
+        token=(elem.text or "").strip().split()
+        if token and token[0].upper() in {"TOC","PAGE","NUMPAGES","SEQ","REF"}:
+            fields.append(token[0].upper())
+    for elem in doc._element.iter(qn("w:fldSimple")):
+        token=(elem.get(qn("w:instr")) or "").strip().split()
+        if token and token[0].upper() in {"TOC","PAGE","NUMPAGES","SEQ","REF"}:
+            fields.append(token[0].upper())
+    if hashlib.sha256(p.read_bytes()).hexdigest()!=before:
+        raise ValueError("Source changed during audit")
+    return {"status":"STRUCTURAL_STYLE_INVENTORY_ONLY","profile_id":profile_id,"source_sha256":before,
+            "counts":{s:sum(x["status"]==s for x in checks) for s in ("PASS","FAIL","UNRESOLVED")},
+            "inventory":inventory,"checks":checks,"main_part_field_tokens":fields,
+            "final_acceptance":False,"word_visual_qa":"NOT_EXECUTED",
+            "limitations":"Explicit role mapping and scoped property inheritance only. Missing rules, document defaults, themes, table geometry, field results, headers/footers, numbering and true layout require template/Word review."}
+
+def main():
+    import argparse
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--docx",required=True)
+    parser.add_argument("--style-map",required=True)
+    parser.add_argument("--output",required=True)
+    args=parser.parse_args()
+    mapping=json.loads(Path(args.style_map).read_text(encoding="utf-8"))
+    result=audit_styles(args.docx,mapping["role_by_style"],mapping.get("paragraph_rules"))
+    with Path(args.output).open("x",encoding="utf-8") as f:
+        json.dump(result,f,ensure_ascii=False,indent=2)
+    return 1 if result["counts"]["FAIL"] or result["counts"]["UNRESOLVED"] else 0
+
+if __name__=="__main__":
+    raise SystemExit(main())

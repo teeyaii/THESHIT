@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "institution": "Ramkhamhaeng University",
   "degree": "MBA",
-  "default_candidate": "ru_mba_campus_2568",
+  "default_candidate": "ru_mba_campus_2569_working",
   "final_approval": false,
   "profiles": {
     "ru_mba_campus_2568": {
@@ -96,6 +96,70 @@
         "confirm current program edition and advisor template",
         "first-line indent and other detailed styles not established from verified general requirements page"
       ]
+    },
+    "ru_mba_campus_2569_working": {
+      "program": "MBA regional campus — working profile",
+      "source_url": "https://mba-campus.ru.ac.th/images/2025/Independent%20Research%20Guide%201-68.pdf",
+      "source_printed_pages": [
+        2,
+        6,
+        7,
+        8
+      ],
+      "paper_mm": [
+        210,
+        297
+      ],
+      "fonts": [
+        "Browallia New",
+        "Browallia UPC"
+      ],
+      "body": {
+        "font": "Browallia New",
+        "size_pt": 16,
+        "first_line_mm": 12.7
+      },
+      "margins_mm": {
+        "left": 38.1,
+        "right": 25.4,
+        "bottom": 25.4,
+        "top_by_role": {
+          "chapter_opening": 25.4,
+          "numbered_page": 38.1
+        }
+      },
+      "chapter_size_pt": 22,
+      "chapter_size_candidates_pt": [
+        20,
+        22
+      ],
+      "heading_size_candidates_pt": [
+        20,
+        18
+      ],
+      "toc_title_pt": 22,
+      "toc_page_number_pt": 18,
+      "bibliography_pt": 18,
+      "appendix_divider_pt": 26,
+      "reference_style": "APA 7",
+      "unresolved": [
+        "2569 manual listed but full PDF unavailable to inspection; remaining values provisionally inherited from verified 2568 baseline",
+        "22 pt chapter working decision resolves project choice, not a claim of 2569 official requirement",
+        "cover variants and exact line/paragraph spacing must be checked against approved template",
+        "top margin varies by page role; validate in Word"
+      ],
+      "latest_guide_url": "https://drive.google.com/file/d/1jNSYUkPM5QWxQ9F9nZgfeJ0A6NftXkHs/view?usp=sharing",
+      "official_listing_url": "https://mba-campus.ru.ac.th/index.php",
+      "latest_guide_status": "LISTED_2569_CONTENT_NOT_VERIFIED",
+      "baseline_source_year_be": 2568,
+      "target_year_be": 2569,
+      "chapter_size_basis": "OWNER_WORKING_DECISION_2026_11_24",
+      "literature_policy": {
+        "max_age_years": null,
+        "age_is_exclusion": false,
+        "basis": "OWNER_REPORTS_ADVISOR_CONSULTATION_2026_11_24",
+        "selection": "relevance, quality, source verification; recent work when useful"
+      }
     }
   }
 }
