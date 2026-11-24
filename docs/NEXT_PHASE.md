@@ -18,6 +18,8 @@ Core baseline: main c5760d8b65666a4243f88f4b6b9f4c72ab854931 after PR #14 merge.
 - Microsoft Word Desktop + actual licensed target font required for Word-specific final visual acceptance, TOC/page numbering and final PDF export when the target institution requires it. Do not substitute another renderer and mark Word QA passed.
 - Acceptance: export checks, text consistency, visual inspection and environment provenance; label unverified previews as such.
 
+- Mandatory formatting acceptance profile: see docs/DOCUMENT_FORMAT_ACCEPTANCE.md and config/document_format_profile.example.json. Separate font, paragraph, styles, margins, pagination, table/figure, references, TOC, source shading and full Word visual gates from PDF text QA. Template-specific settings are not assumed.
+
 ## D. Mobile control
 - First version: read-only responsive static dashboard linked to GitHub Actions; no login, data upload, secrets, network proxy or real study data. Public pages may expose only generic software/demo status.
 - Later: authenticated private workspace with separate authorization, threat model, retention and backup decisions. Render/Supabase not required for current stage.
