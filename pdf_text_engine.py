@@ -2,6 +2,7 @@
 import csv
 import io
 import hashlib
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -46,6 +47,8 @@ def parse_tsv(tsv):
         if min(x,y)<0 or min(w,h)<=0:
             raise ValueError("Invalid OCR bounding box")
         confidence=float(row["conf"])
+        if not math.isfinite(confidence) or not 0<=confidence<=100:
+            raise ValueError("Invalid OCR word confidence")
         words.append({"text":row["text"],"confidence":confidence,
                       "pixel_bbox":[x,y,x+w,y+h]})
     return words
