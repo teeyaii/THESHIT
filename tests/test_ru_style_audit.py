@@ -59,3 +59,28 @@ class RUStyleTests(unittest.TestCase):
             self.assertTrue(any(c["field"]=="style_classification" and c["status"]=="UNRESOLVED" for c in qa["checks"]))
             with self.assertRaises(ValueError):
                 audit_styles(path,{"Normal":"unknown"})
+
+    def test_explicit_role_sizes_and_flexible_table(self):
+        from ru_thesis_builder import make_styles
+        with tempfile.TemporaryDirectory() as d:
+            path=Path(d)/"roles.docx"
+            doc=Document()
+            make_styles(doc,get_profile(PROFILE))
+            for style,txt in [("RU Subheading","Heading"),("RU Subheading 2","Subheading"),
+                              ("RU TOC Title","Contents"),("RU Bibliography Title","References"),
+                              ("RU Front","Unverified front title"),("RU Notice","Synthetic notice"),
+                              ("RU Caption","Table caption")]:
+                doc.add_paragraph(txt,style=style)
+            doc.save(path)
+            mapping={"RUSubheading":"heading1","RUSubheading2":"heading2",
+                     "RUTOCTitle":"toc_title","RUBibliographyTitle":"bibliography_title",
+                     "RUFront":"front_title","RUNotice":"fixture_notice","RUCaption":"caption"}
+            qa=audit_styles(path,mapping)
+            sizes=[c for c in qa["checks"] if c["field"]=="sz"]
+            self.assertEqual([c["expected"] for c in sizes],[20,18,22,18,None,16,None])
+            self.assertEqual([c["status"] for c in sizes],["PASS","PASS","PASS","PASS","UNRESOLVED","PASS","UNRESOLVED"])
+            self.assertEqual(sizes[5]["basis"],"SYNTHETIC_FIXTURE_CONVENTION_NOT_UNIVERSITY_RULE")
+            self.assertFalse(qa["final_acceptance"])
+            doc.paragraphs[1].runs[0].font.size=Pt(20)
+            doc.save(path)
+            self.assertTrue(any(c["location"].startswith("body/p:1/") and c["field"]=="sz" and c["status"]=="FAIL" for c in audit_styles(path,mapping)["checks"]))
