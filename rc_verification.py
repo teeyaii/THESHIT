@@ -46,10 +46,11 @@ def run(out,commit,*,pdf=False):
     if verify_report(root/"report")!=report_qa or verify_thesis(root/"thesis")!=thesis_qa or verify_article(root/"article")!=article_qa:
         raise ValueError("Reopened document verification mismatch")
     thesis_path=root/"thesis/SYNTHETIC_RU_structure.docx"
-    mapping={"RUBody":"body","RUChapter":"chapter","RUFront":"toc_title",
-             "RUSubheading":"heading","RUTable":"table","RUCaption":"caption",
+    mapping={"RUBody":"body","RUChapter":"chapter","RUFront":"front_title","RUTOCTitle":"toc_title","RUBibliographyTitle":"bibliography_title",
+             "RUNotice":"fixture_notice",
+             "RUSubheading":"heading1","RUSubheading2":"heading2","RUTable":"table","RUCaption":"caption",
              "RUReference":"bibliography","RUAppendix":"appendix_divider"}
-    # Front matter and notice roles are only inventory hints, not accepted template classifications.
+    # Non-TOC front titles and flexible table/caption sizes stay unresolved; notice is a fixture convention.
     style_qa=audit_styles(thesis_path,mapping)
     write(root/"SYNTHETIC_style_inventory.json",style_qa)
     write(root/"SYNTHETIC_language_candidates.json",language_candidates(thesis_path))
