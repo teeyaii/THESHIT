@@ -41,7 +41,7 @@ def font_props(style,font,size,bold=False):
 def make_styles(doc,profile):
     font=profile["body"]["font"];body=profile["body"]["size_pt"]
     specs={"RU Body":(body,False),"RU Chapter":(profile["chapter_size_pt"],profile["chapter_bold"]),
-           "RU Front":(22,True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
+           "RU Front":(22,True),"RU TOC Title":(profile["toc_title_pt"],True),"RU Bibliography Title":(profile["bibliography_pt"],True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
            "RU Table":(body,False),"RU Caption":(body,False),
            "RU Reference":(profile["bibliography_pt"],False),
            "RU Appendix":(profile["appendix_divider_pt"],True),
@@ -55,7 +55,7 @@ def make_styles(doc,profile):
         p.widow_control=True;p.keep_with_next=False;p.keep_together=False
         p.first_line_indent=Mm(profile["body"]["first_line_mm"] if name=="RU Body" else 0)
         p.alignment=WD_ALIGN_PARAGRAPH.LEFT
-        if name in ("RU Chapter","RU Front","RU Appendix"):
+        if name in ("RU Chapter","RU Front","RU TOC Title","RU Bibliography Title","RU Appendix"):
             p.alignment=WD_ALIGN_PARAGRAPH.CENTER
             p.keep_with_next=True;p.keep_together=True;p.page_break_before=True
         if name in ("RU Subheading","RU Subheading 2"):
@@ -119,7 +119,7 @@ def build(report,output_dir):
     add("English abstract pending approved research.")
     add("กิตติกรรมประกาศ","RU Front")
     add("รอข้อความจากผู้วิจัย")
-    add("สารบัญ","RU Front")
+    add("สารบัญ","RU TOC Title")
     toc=doc.add_paragraph(style="RU Body")
     field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2,RU Subheading 2,3" \\h \\z',"TOC PENDING WORD UPDATE")
     add("สารบัญตาราง","RU Front")
@@ -155,7 +155,7 @@ def build(report,output_dir):
                     para=table.cell(i,j).paragraphs[0];para.style=doc.styles["RU Table"];para.text=value
         if n=="5":
             add("การอภิปรายผลถูกระงับจนกว่าจะมีหลักฐานและผลการศึกษาจริงที่ผ่านการตรวจรับ")
-    add("บรรณานุกรม","RU Front")
+    add("บรรณานุกรม","RU Bibliography Title")
     add("ยังไม่มีรายการอ้างอิงที่ได้รับการตรวจรับ ไม่สร้างรายการอ้างอิงสมมติ","RU Reference")
     add("ภาคผนวก","RU Appendix")
     add("รอเอกสารที่ได้รับอนุมัติ ไม่มีแบบสอบถามหรือข้อมูลบุคคลในตัวอย่างนี้")
