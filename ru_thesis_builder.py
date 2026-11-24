@@ -186,7 +186,7 @@ def verify(output_dir):
     if [p.text for p in chapters]!=["บทที่ "+n+"\n"+t for n,t in CHAPTERS]:
         raise ValueError("Chapter order mismatch")
     profile=get_profile(PROFILE)
-    for name,size in (("RU Body",16),("RU Chapter",22)):
+    for name,size in (("RU Body",profile["body"]["size_pt"]),("RU Chapter",profile["chapter_size_pt"])):
         style=doc.styles[name]
         rpr=style._element.rPr
         if style.font.name!=profile["body"]["font"] or style.font.size.pt!=size or rpr.rFonts.get(qn("w:cs"))!=profile["body"]["font"] or rpr.find(qn("w:szCs")).get(qn("w:val"))!=str(size*2):
