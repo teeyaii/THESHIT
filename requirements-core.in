@@ -1,4 +1,4 @@
 -r requirements-oss.txt
-# Core adapters; transitive versions resolved and hashed by CI.
-openpyxl==3.1.5
-scipy==1.15.3
+# Include bootstrap packages in the hashed runtime lock; minimum fixes from run 45322753156.
+pip>=26.2
+setuptools>=84.1.0
