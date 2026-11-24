@@ -23,7 +23,7 @@ jobs:
           mkdir -p core-qa
       - name: Resolve hashed lock candidate
         run: |
-          /tmp/theshit-tools/bin/pip-compile --generate-hashes --strip-extras --output-file=core-qa/requirements-core-linux-py311.lock requirements-core.in
+          /tmp/theshit-tools/bin/pip-compile --generate-hashes --strip-extras --allow-unsafe --output-file=core-qa/requirements-core-linux-py311.lock requirements-core.in
       - name: Install and check runtime
         run: |
           /tmp/theshit-runtime/bin/python -m pip install --require-hashes -r core-qa/requirements-core-linux-py311.lock
