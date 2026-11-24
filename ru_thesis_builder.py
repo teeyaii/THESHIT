@@ -58,10 +58,10 @@ def make_styles(doc,profile):
         if name in ("RU Chapter","RU Front","RU Appendix"):
             p.alignment=WD_ALIGN_PARAGRAPH.CENTER
             p.keep_with_next=True;p.keep_together=True;p.page_break_before=True
-        if name=="RU Subheading":
+        if name in ("RU Subheading","RU Subheading 2"):
             p.keep_with_next=True;p.keep_together=True
-        if name in ("RU Chapter","RU Subheading"):
-            s._element.get_or_add_pPr().append(element("outlineLvl",val=0 if name=="RU Chapter" else 1))
+        if name in ("RU Chapter","RU Subheading","RU Subheading 2"):
+            s._element.get_or_add_pPr().append(element("outlineLvl",val=0 if name=="RU Chapter" else (1 if name=="RU Subheading" else 2)))
 
 def field(paragraph,instruction,placeholder):
     r=paragraph.add_run()
@@ -121,7 +121,7 @@ def build(report,output_dir):
     add("รอข้อความจากผู้วิจัย")
     add("สารบัญ","RU Front")
     toc=doc.add_paragraph(style="RU Body")
-    field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2" \\h \\z',"TOC PENDING WORD UPDATE")
+    field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2,RU Subheading 2,3" \\h \\z',"TOC PENDING WORD UPDATE")
     add("สารบัญตาราง","RU Front")
     add("รออัปเดตสารบัญตารางใน Word")
     add("สารบัญภาพ","RU Front")
@@ -135,7 +135,7 @@ def build(report,output_dir):
     foot=main.footer.paragraphs[0];foot.style=doc.styles["RU Notice"];foot.text=NOTICE
     field(head,"PAGE","PAGE PENDING")
     for n,t in CHAPTERS:
-        heading=add("บทที่ "+n+" "+t,"RU Chapter")
+        heading=add("บทที่ "+n+"\n"+t,"RU Chapter")
         if n=="1":heading.paragraph_format.page_break_before=False
         if n in ("1","2","3"):
             add("ส่วนนี้เป็นตำแหน่งสำหรับเนื้อหาที่ได้รับอนุมัติ ยังไม่มีข้อค้นพบหรือแหล่งอ้างอิงจริง")
@@ -183,7 +183,7 @@ def verify(output_dir):
     if len(doc.tables)!=1 or [[c.text for c in r.cells] for r in doc.tables[0].rows]!=manifest["table_rows"]:
         raise ValueError("Table mismatch")
     chapters=[p for p in doc.paragraphs if p.style.name=="RU Chapter"]
-    if [p.text for p in chapters]!=["บทที่ "+n+" "+t for n,t in CHAPTERS]:
+    if [p.text for p in chapters]!=["บทที่ "+n+"\n"+t for n,t in CHAPTERS]:
         raise ValueError("Chapter order mismatch")
     profile=get_profile(PROFILE)
     for name,size in (("RU Body",16),("RU Chapter",22)):
