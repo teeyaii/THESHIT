@@ -13,6 +13,7 @@ from ru_format_audit import get_profile
 from academic_writing import draft,verify_draft
 from statistical_engine import LABEL
 from report_engine import source_hash
+from ru_word_runs import add_script_runs
 
 PROFILE="ru_mba_campus_2569_working"
 NOTICE="SYNTHETIC ONLY — NOT FOR ACADEMIC SUBMISSION"
@@ -105,7 +106,7 @@ def build(report,output_dir):
     expected=[]
     def add(text,style="RU Body"):
         expected.append([style,text])
-        return doc.add_paragraph(text,style=style)
+        return add_script_runs(doc.add_paragraph(style=style),text)
     title=add(NOTICE,"RU Notice");title.alignment=WD_ALIGN_PARAGRAPH.CENTER
     add("โครงสร้างการค้นคว้าอิสระ มหาวิทยาลัยรามคำแหง (ตัวอย่างระบบ)","RU Front").paragraph_format.page_break_before=False
     add("Working profile 2569 — ยังไม่ใช่แม่แบบที่อนุมัติ")
@@ -152,7 +153,7 @@ def build(report,output_dir):
             table.rows[0]._tr.get_or_add_trPr().append(element("tblHeader",val="true"))
             for i,row in enumerate(rows):
                 for j,value in enumerate(row):
-                    para=table.cell(i,j).paragraphs[0];para.style=doc.styles["RU Table"];para.text=value
+                    para=table.cell(i,j).paragraphs[0];para.style=doc.styles["RU Table"];add_script_runs(para,value)
         if n=="5":
             add("การอภิปรายผลถูกระงับจนกว่าจะมีหลักฐานและผลการศึกษาจริงที่ผ่านการตรวจรับ")
     add("บรรณานุกรม","RU Bibliography Title")
