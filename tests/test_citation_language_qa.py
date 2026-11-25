@@ -34,3 +34,11 @@ class CitationLanguageTests(unittest.TestCase):
             p=Path(d)/"fixture.docx";Document().save(p)
             r=review_citations(p,{"document_sha256":inventory(p)["source_sha256"],"references":[],"citations":[]})
             self.assertFalse(r["declared_links_consistent"])
+
+    def test_new_candidates_do_not_rewrite_proper_names(self):
+        with tempfile.TemporaryDirectory() as d:
+            p=Path(d)/"fixture.docx";doc=Document()
+            doc.add_paragraph("ภาษาไทย  English (Proper Name)  ");doc.save(p)
+            before=p.read_bytes();qa=language_candidates(p)
+            self.assertTrue({"THAI_LATIN_MULTISPACE","TRAILING_PARAGRAPH_SPACE","PARENTHETICAL_ENGLISH_CASE_REVIEW"}.issubset({w["code"] for w in qa["warnings"]}))
+            self.assertEqual(p.read_bytes(),before)
