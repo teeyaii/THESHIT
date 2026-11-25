@@ -7,7 +7,7 @@ from docx.oxml.ns import qn
 from ru_format_audit import get_profile, paragraph_property, property_nodes, font_value, size_value
 
 PROFILE="ru_mba_campus_2569_working"
-ROLES={"body","chapter","heading","table","caption","bibliography","toc_title","appendix_divider","heading1","heading2","front_title","bibliography_title","fixture_notice"}
+ROLES={"body","chapter","heading","table","caption","bibliography","toc_title","appendix_divider","heading1","heading2","front_title","bibliography_title","fixture_notice","heading3","heading4","heading5","table_label"}
 PARAGRAPH_FIELDS={"alignment","first_line_indent","left_indent","right_indent",
                   "space_before","space_after","line_spacing","line_spacing_rule",
                   "keep_with_next","keep_together","page_break_before","widow_control"}
@@ -34,6 +34,8 @@ def role_rules(profile,role):
     if role=="fixture_notice":
         size=profile["body"]["size_pt"]
     rules={"size_pt":size,"font":profile["body"]["font"]}
+    if role=="table":rules["minimum_pt"]=profile.get("table_text_min_pt")
+    if role=="table_label":rules["size_pt"]=None
     if role=="body" and profile["body"]["first_line_mm"] is not None:
         rules["paragraph"]={"first_line_indent":profile["body"]["first_line_mm"]*72/25.4}
     else:
@@ -68,6 +70,9 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
             compare(loc,"style_classification",None,"explicit role")
             return
         rules=role_rules(profile,role)
+        if role in ("heading","heading1","heading2","heading3","heading4","heading5") and profile.get("heading_weight_alignment_status")=="UNRESOLVED_CONFLICT":
+            compare(loc,"heading_weight_alignment",None,None)
+            checks[-1]["reason"]="UNRESOLVED_CONFLICT X-02: printed p4 versus p10"
         expected={**template_rules.get(role,{}),**rules["paragraph"]}
         for field,target in expected.items():
             compare(loc,field,values[field],target)
@@ -84,14 +89,23 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
                 compare(rloc,"font_"+slot,font_value(nodes,slot),rules["font"])
             for tag in (["szCs"] if thai else [])+(["sz"] if latin or not thai else []):
                 compare(rloc,tag,size_value(nodes,tag),rules["size_pt"])
-                if role in ("table","caption") and rules["size_pt"] is None:
-                    checks[-1]["reason"]="RU 2569 p9 allows smaller than 16 pt as appropriate; exact size and legibility require template/visual review."
+                if role=="table" and rules.get("minimum_pt") is not None:
+                    actual=checks[-1]["actual"];minimum=rules["minimum_pt"]
+                    checks[-1].update(expected=minimum,status="UNRESOLVED" if actual is None else ("PASS" if actual>=minimum else "FAIL"),reason="Minimum table text size, printed p11 / physical 13; visual legibility still pending")
+                elif role in ("caption","table_label"):
+                    checks[-1]["reason"]="UNRESOLVED_CONFLICT X-08: p11 table text minimum 14 versus caption 12; label role also requires visual review."
                 elif role=="front_title" and rules["size_pt"] is None:
                     checks[-1]["reason"]="Front-matter role is not necessarily a TOC heading; exact title size requires approved template."
                 elif role=="fixture_notice":
                     checks[-1]["basis"]="SYNTHETIC_FIXTURE_CONVENTION_NOT_UNIVERSITY_RULE"
     def tables(items,prefix):
         for ti,t in enumerate(items):
+            if profile.get("table_text_min_pt") is not None:
+                borders=t._tbl.tblPr.find(qn("w:tblBorders"))
+                direct=[borders.find(qn("w:"+side)) if borders is not None else None for side in ("left","right","insideV")]
+                actual=None if any(e is None for e in direct) else all(e.get(qn("w:val")) in ("nil","none") for e in direct)
+                compare(f"{prefix}/table:{ti}","no_direct_vertical_borders",actual,True)
+                checks[-1]["reason"]="Direct table borders only; cell/style overrides require Word review (printed p11)."
             for ri,row in enumerate(t.rows):
                 for ci,cell in enumerate(row.cells):
                     if cell._tc in seen:
@@ -119,7 +133,7 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
         raise ValueError("Source changed during audit")
     return {"status":"STRUCTURAL_STYLE_INVENTORY_ONLY","profile_id":profile_id,"source_sha256":before,
             "counts":{s:sum(x["status"]==s for x in checks) for s in ("PASS","FAIL","UNRESOLVED")},
-            "inventory":inventory,"checks":checks,"main_part_field_tokens":fields,
+            "inventory":inventory,"checks":checks,"manual_conflicts":profile.get("manual_conflicts",[]),"main_part_field_tokens":fields,
             "final_acceptance":False,"word_visual_qa":"NOT_EXECUTED",
             "limitations":"Explicit role mapping and scoped property inheritance only. Missing rules, document defaults, themes, table geometry, field results, headers/footers, numbering and true layout require template/Word review."}
 
