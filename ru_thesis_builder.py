@@ -10,7 +10,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Mm, Pt
 from ru_format_audit import get_profile
-from academic_writing import draft,verify_draft
+from academic_writing import draft,verify_draft,fmt
 from statistical_engine import LABEL
 from report_engine import source_hash
 from ru_word_runs import add_script_runs
@@ -170,7 +170,9 @@ def build(report,output_dir):
             label=doc.add_paragraph(style="RU Table Label");add_script_runs(label,"ตาราง ");field(label,'SEQ ตาราง \\* ARABIC',"1")
             expected.append(["RU Table Label","ตาราง 1"])
             add("ค่าประมาณจากข้อมูลสังเคราะห์","RU Caption")
-            rows=[["Variable","B","HC3 p"]]+[[r["variable"],format(r["b"],".8g"),format(r["hc3_p"],".8g")]
+            primary=report["model"]["primary_inference"]
+            key="hc3_p" if primary=="HC3" else "p"
+            rows=[["Variable","B",primary+" p"]]+[[r["variable"],fmt(r["b"]),fmt(r[key],p_value=True)]
                                              for r in report["model"]["coefficients"]]
             table=doc.add_table(rows=len(rows),cols=3)
             table.style="Table Normal";horizontal_borders(table)
