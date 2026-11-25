@@ -85,3 +85,35 @@ def reconcile(doc_path,citation_manifest,evidence_index,decisions,claim_links,so
             "claims":results,"unlinked_citation_ids":missing,"citation_issues":cita["issues"],
             "declared_links_consistent":not missing and cita["declared_links_consistent"] and all(not r["issues"] for r in results),
             "final_acceptance":False,"limitations":"Exact claims, reviewed file identity and reviewer attestations only. No automated semantic validation, independent inventory completeness or reviewer authentication."}
+
+def audit_multi_source_spans(doc_path,citation_manifest,evidence_index,decisions,claim_links,source_dir,crop_dir,spans,*,source_colors,multi_source_color):
+    """One explicit RGB convention for jointly cited sources; never automatic semantic approval."""
+    from document_coverage import audit
+    from evidence_highlight import rgb
+    qa=reconcile(doc_path,citation_manifest,evidence_index,decisions,claim_links,source_dir,crop_dir)
+    if not qa["declared_links_consistent"]:
+        raise ValueError("All declared claim/source links must reconcile first")
+    claims=index(claim_links,"claim_id");citations=index(citation_manifest["citations"],"citation_id")
+    references=index(citation_manifest["references"],"reference_id")
+    palette={k:rgb(v) for k,v in source_colors.items()}
+    multi=rgb(multi_source_color)
+    if multi in palette.values():raise ValueError("Multi-source color must be distinct")
+    approved=[];mapping=[];seen=set()
+    for span in spans:
+        cid=span["claim_id"];claim=claims[cid]
+        if cid in seen:raise ValueError("Duplicate claim shading specification")
+        seen.add(cid)
+        sources=span["sources"]
+        if not isinstance(sources,list) or not sources or any(not isinstance(x,str) for x in sources) or len(sources)!=len(set(sources)):
+            raise ValueError("Unique reference IDs required for each span")
+        cited={rid for k in claim["citation_ids"] for rid in citations[k]["reference_ids"]}
+        if set(sources)!=cited or any(rid not in references or rid not in palette for rid in sources):
+            raise ValueError("Shading must cover exactly every reconciled cited reference")
+        hashes={references[rid]["source_sha256"] for rid in sources}
+        if len(hashes)!=len(sources):raise ValueError("Duplicate physical source in shading convention")
+        expected=multi if len(sources)>1 else palette[sources[0]]
+        if rgb(span["color"])!=expected:raise ValueError("Incorrect source shading color convention")
+        approved.append({"part":claim["part"],"paragraph":claim["paragraph"],"start":claim["start"],"end":claim["end"],"text":claim["exact_text"],"color":expected})
+        mapping.append({"claim_id":cid,"sources":sorted(sources),"color":expected})
+    if not approved:raise ValueError("Explicit source shading spans required")
+    return {"status":"MULTI_SOURCE_SHADING_REVIEW_ONLY","coverage":audit(doc_path,approved,expected_sha256=qa["document_sha256"]),"source_mapping":mapping,"final_acceptance":False}
