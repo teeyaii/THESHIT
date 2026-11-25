@@ -61,6 +61,7 @@ def build(report,output_dir):
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         s.font.name=profile["font"];s.font.size=Pt(profile[key]);s.font.bold=bold
         pr=s._element.get_or_add_rPr()
+        bold_cs=OxmlElement("w:bCs");bold_cs.set(qn("w:val"),"1" if bold else "0");pr.insert_element_before(bold_cs,"w:sz","w:szCs")
         for attr in ("ascii","hAnsi","eastAsia","cs"):
             pr.rFonts.set(qn("w:"+attr),profile["font"])
         size=OxmlElement("w:szCs");size.set(qn("w:val"),str(profile[key]*2));pr.append(size)
@@ -79,6 +80,7 @@ def build(report,output_dir):
     for heading,body in data["sections"]:
         if heading=="Title":expected.append(["RA Title",body])
         elif heading=="Author information":expected.append(["RA Author",body])
+        elif heading in ("Methods fixture","Results fixture"):expected.append(["RA Body",body])
         else:expected.extend([["RA Heading",heading],["RA Body",body]])
     for style,text in expected:
         add_script_runs(doc.add_paragraph(style=style),text)
