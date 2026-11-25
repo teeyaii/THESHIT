@@ -46,9 +46,9 @@ def run(out,commit,*,pdf=False):
     if verify_report(root/"report")!=report_qa or verify_thesis(root/"thesis")!=thesis_qa or verify_article(root/"article")!=article_qa:
         raise ValueError("Reopened document verification mismatch")
     thesis_path=root/"thesis/SYNTHETIC_RU_structure.docx"
-    mapping={"RUBody":"body","RUChapter":"chapter","RUFront":"front_title","RUTOCTitle":"toc_title","RUBibliographyTitle":"bibliography_title",
+    mapping={"RUBody":"body","RUChapter":"chapter","RUFront":"front_title","RUFrontEntry":"front_title","RUTOCTitle":"toc_title","RUBibliographyTitle":"bibliography_title",
              "RUNotice":"fixture_notice",
-             "RUSubheading":"heading1","RUSubheading2":"heading2","RUTable":"table","RUCaption":"caption",
+             "RUSubheading":"heading1","RUSubheading2":"heading2","RUTable":"table","RUCaption":"caption","RUTableLabel":"table_label","RUSubheading3":"heading3","RUSubheading4":"heading4","RUSubheading5":"heading5",
              "RUReference":"bibliography","RUAppendix":"appendix_divider"}
     # Non-TOC front titles and flexible table/caption sizes stay unresolved; notice is a fixture convention.
     style_qa=audit_styles(thesis_path,mapping)
