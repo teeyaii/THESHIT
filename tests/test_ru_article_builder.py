@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from docx import Document
+from citation_language_qa import language_candidates
 from statistical_engine import analyze,LABEL
 from ru_article_builder import build,verify
 
@@ -16,6 +17,7 @@ class ArticleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             out=Path(d)/"article";qa=build(sample(),out)
             self.assertEqual(qa,verify(out))
+            self.assertNotIn("THAI_RUN_WITHOUT_CS",{w["code"] for w in language_candidates(out/"SYNTHETIC_RU_article.docx")["warnings"]})
             self.assertFalse(qa["official_article_template_verified"])
             self.assertFalse(qa["final_acceptance"])
             doc=Document(out/"SYNTHETIC_RU_article.docx")
