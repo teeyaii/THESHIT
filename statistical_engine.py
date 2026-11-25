@@ -1,4 +1,6 @@
 """General-purpose synthetic analysis. No real-data intake or hypothesis targeting."""
+import json
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -69,6 +71,21 @@ def analyze(frame, predictors, outcome, *, source_label, missing_policy="reject"
     # Compare in standardized outcome units rather than a fixed raw-unit tolerance.
     if not np.allclose(beta/outcome_scale,fit.params.to_numpy()/outcome_scale,rtol=1e-7,atol=1e-9) or not np.allclose(cov/total*n,robust.cov_params()/total*n,rtol=1e-7,atol=1e-9):
         raise ValueError("Independent OLS/HC3 cross-check failed")
+    policy=json.loads((Path(__file__).with_name("config")/"analysis_reporting.json").read_text(encoding="utf-8"))
+    primary=policy["primary_inference"]
+    if primary not in ("OLS","HC3") or policy.get("scope")!="SYNTHETIC_ONLY":
+        raise ValueError("Invalid synthetic reporting policy")
+    # Test all non-intercept coefficients jointly in scale-independent units.
+    q=len(predictors)
+    cb=beta[1:]/outcome_scale;cc=cov[1:,1:]/total*n
+    if np.linalg.matrix_rank(cc)!=q:
+        raise ValueError("HC3 joint test covariance rank deficient")
+    wald_f=float(cb@np.linalg.solve(cc,cb)/q)
+    wald_p=float(stats.f.sf(wald_f,q,fit.df_resid))
+    restriction=np.eye(q+1)[1:]
+    joint=robust.f_test(restriction)
+    if not np.allclose([wald_f,wald_p],[float(np.asarray(joint.fvalue).item()),float(np.asarray(joint.pvalue).item())],rtol=1e-7,atol=1e-12):
+        raise ValueError("Independent HC3 joint test cross-check failed")
     ci=fit.conf_int().to_numpy()
     rci=robust.conf_int()
     coeff=[]
@@ -82,6 +99,11 @@ def analyze(frame, predictors, outcome, *, source_label, missing_policy="reject"
              "vif":None if i==0 else finite(variance_inflation_factor(x,i))})
     lm,lmp,_,_=het_breuschpagan(fit.resid,x)
     jb,jbp,_,_=jarque_bera(fit.resid)
+    cooks=fit.get_influence().cooks_distance[0]
+    threshold=4/n
+    positions=np.flatnonzero(~excluded.to_numpy())
+    influential=[{"input_row_1based":int(positions[i]+1),"cooks_distance":float(value)}
+                 for i,value in enumerate(cooks) if value>threshold]
     descriptives={name:{"n":n,"mean":finite(clean[name].mean()),
                          "sd":finite(clean[name].std(ddof=1)),
                          "min":finite(clean[name].min()),"max":finite(clean[name].max())}
@@ -94,10 +116,14 @@ def analyze(frame, predictors, outcome, *, source_label, missing_policy="reject"
             "descriptives":descriptives,"correlation":clean.corr().to_dict(),
             "model":{"r_squared":finite(fit.rsquared),"adjusted_r_squared":finite(fit.rsquared_adj),
                      "f":finite(fit.fvalue),"f_p":finite(fit.f_pvalue),
-                     "df_residual":finite(fit.df_resid),"coefficients":coeff,
+                     "df_residual":finite(fit.df_resid),"df_model":q,"coefficients":coeff,
+                     "primary_inference":primary,"hc3_f":finite(wald_f),"hc3_f_p":finite(wald_p),
+                     "hc3_joint_check":"PASS",
                      "hc3_inference":"Student t; residual degrees of freedom",
                      "independent_ols_hc3_check":"PASS"},
             "diagnostics":{"breusch_pagan_lm":finite(lm),"breusch_pagan_p":finite(lmp),
                            "jarque_bera":finite(jb),"jarque_bera_p":finite(jbp),
-                           "max_cooks_distance":finite(np.max(fit.get_influence().cooks_distance[0]))},
+                           "max_cooks_distance":finite(np.max(cooks)),"cooks_threshold":threshold,
+                           "cooks_cases_flagged":len(influential)},
+            "influential_cases":{"rule":"Cook D > 4/n_complete; inspect only, no automatic exclusion","cases":influential},
             "limitations":"Synthetic fixture only; associations, not causation. Model and assumptions require independent methodological review."}
