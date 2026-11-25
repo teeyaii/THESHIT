@@ -175,7 +175,7 @@ def build(report,output_dir):
             rows=[["Variable","B",primary+" p"]]+[[r["variable"],fmt(r["b"]),fmt(r[key],p_value=True)]
                                              for r in report["model"]["coefficients"]]
             table=doc.add_table(rows=len(rows),cols=3)
-            table.style="Table Normal";horizontal_borders(table)
+            table.style="Normal Table";horizontal_borders(table)
             table.rows[0]._tr.get_or_add_trPr().append(element("tblHeader",val="true"))
             for i,row in enumerate(rows):
                 for j,value in enumerate(row):
