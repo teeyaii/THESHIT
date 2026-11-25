@@ -71,9 +71,11 @@ def language_candidates(path):
     inv=inventory(path)
     warnings=[]
     for p in inv["paragraphs"]:
+        for start,end in p["thai_without_direct_cs_spans"]:
+            warnings.append({"part":p["part"],"paragraph":p["paragraph"],"start":start,"end":end,"code":"THAI_RUN_WITHOUT_CS"})
         for code,pattern in PATTERNS.items():
             for m in re.finditer(pattern,p["text"],flags=re.IGNORECASE):
                 warnings.append({"part":p["part"],"paragraph":p["paragraph"],"start":m.start(),"end":m.end(),"code":code})
     return {"status":"EDITORIAL_CANDIDATES_ONLY","source_sha256":inv["source_sha256"],
             "warnings":warnings,"automatic_edits":0,"final_acceptance":False,
-            "limitations":"Some whitespace, zero-width marks and punctuation are legitimate. Human review required; no AI authorship detection or automatic language correction."}
+            "limitations":"Some whitespace, zero-width marks and punctuation are legitimate. Thai script warnings concern direct run properties only; inherited styles and visual layout require separate review. Human review required; no AI authorship detection or automatic language correction."}
