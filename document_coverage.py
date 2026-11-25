@@ -30,7 +30,7 @@ def explicit_color(run):
     return fill.upper(),False
 
 def para_record(p,index,part):
-    text=[]; colors=[]; unsupported=set(); structural=[]
+    text=[]; colors=[]; unsupported=set(); structural=[]; thai_without_cs=[]
     if p.xpath(".//w:p",namespaces=NS):
         structural.append("NESTED_PARAGRAPH_CONTAINER")
     if p.xpath(".//w:ins | .//w:del | .//w:moveFrom | .//w:moveTo | .//w:fldSimple | .//w:fldChar | .//w:instrText",namespaces=NS):
@@ -41,6 +41,8 @@ def para_record(p,index,part):
         if next(r.iterancestors(q("p")),None) is not p:
             continue
         fill,unknown=explicit_color(r)
+        props=r.find(q("rPr")); cs=props.find(q("cs")) if props is not None else None
+        explicit_cs=cs is not None and cs.get(q("val"),"true") in ("1","true","on")
         for child in r:
             if child.tag==q("t"):
                 value=child.text or ""
@@ -58,9 +60,13 @@ def para_record(p,index,part):
                 continue
             if unknown:
                 unsupported.update(range(len(colors),len(colors)+len(value)))
+            if not explicit_cs:
+                for match in re.finditer(r"[\u0e00-\u0e7f]+",value):
+                    thai_without_cs.append([len(colors)+match.start(),len(colors)+match.end()])
             text.append(value);colors.extend([fill]*len(value))
     return {"part":part,"paragraph":index,"text":"".join(text),"colors":colors,
             "unknown_color_offsets":sorted(unsupported),"structural_flags":sorted(set(structural)),
+            "thai_without_direct_cs_spans":thai_without_cs,
             "table_depth":sum(1 for _ in p.iterancestors(q("tbl")))}
 
 def inventory(doc_path):
