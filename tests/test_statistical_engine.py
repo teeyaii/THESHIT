@@ -52,7 +52,7 @@ class StatisticalTests(unittest.TestCase):
         for scale in (1e-9,1e9):
             with self.subTest(scale=scale):
                 report=analyze(pd.DataFrame(dict(x=x,y=y*scale)),["x"],"y",source_label=LABEL)
-                for key in ("r_squared","adjusted_r_squared","f","f_p"):
+                for key in ("r_squared","adjusted_r_squared","f","f_p","hc3_f","hc3_f_p"):
                     self.assertAlmostEqual(report["model"][key],baseline["model"][key],places=10)
                 for a,b in zip(baseline["model"]["coefficients"],report["model"]["coefficients"]):
                     for key in ("b","se","hc3_se"):
@@ -68,3 +68,18 @@ class StatisticalTests(unittest.TestCase):
         for scale in (1,1e-9,1e9):
             with self.assertRaisesRegex(ValueError,"Near-perfect fit"):
                 analyze(pd.DataFrame(dict(x=x,y=(1+2*x)*scale)),["x"],"y",source_label=LABEL)
+
+    def test_academic_joint_hc3_and_cook_positions(self):
+        import statsmodels.api as sm
+        data=fixture();data.loc[0,"a"]=np.nan
+        report=analyze(data,["a","b"],"y",source_label=LABEL,missing_policy="complete_case")
+        clean=data.dropna()
+        fit=sm.OLS(clean.y,sm.add_constant(clean[["a","b"]])).fit()
+        robust=fit.get_robustcov_results(cov_type="HC3",use_t=True)
+        test=robust.f_test(np.eye(3)[1:])
+        self.assertAlmostEqual(report["model"]["hc3_f"],float(np.asarray(test.fvalue).item()),places=10)
+        self.assertAlmostEqual(report["model"]["hc3_f_p"],float(np.asarray(test.pvalue).item()),places=10)
+        self.assertEqual(report["model"]["hc3_joint_check"],"PASS")
+        expected=[int(i+1) for i,v in zip(clean.index,fit.get_influence().cooks_distance[0]) if v>4/len(clean)]
+        self.assertEqual([v["input_row_1based"] for v in report["influential_cases"]["cases"]],expected)
+        self.assertEqual(report["n_complete"],79)
