@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from docx import Document
+from citation_language_qa import language_candidates
 from ru_thesis_builder import build,verify,demo_report,PROFILE
 
 class RUThesisTests(unittest.TestCase):
@@ -14,6 +15,7 @@ class RUThesisTests(unittest.TestCase):
             self.assertFalse(qa["final_acceptance"])
             self.assertEqual(qa["toc_status"],"FIELD_PRESENT_NOT_UPDATED")
             self.assertEqual(verify(p),qa)
+            self.assertNotIn("THAI_RUN_WITHOUT_CS",{w["code"] for w in language_candidates(p/"SYNTHETIC_RU_structure.docx")["warnings"]})
             doc=Document(p/"SYNTHETIC_RU_structure.docx")
             self.assertEqual(doc.styles["RU Chapter"].font.size.pt,20)
             self.assertEqual(doc.styles["RU Body"].font.size.pt,16)
