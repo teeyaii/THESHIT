@@ -26,7 +26,7 @@ class CitationLanguageTests(unittest.TestCase):
             p=Path(d)/"fixture.docx";doc=Document();doc.add_paragraph("ภาษา  ไทย TODO");doc.save(p)
             before=p.read_bytes()
             result=language_candidates(p)
-            self.assertEqual({w["code"] for w in result["warnings"]},{"THAI_INTERNAL_MULTISPACE","UNREPLACED_PLACEHOLDER"})
+            self.assertEqual({w["code"] for w in result["warnings"]},{"THAI_INTERNAL_MULTISPACE","UNREPLACED_PLACEHOLDER","THAI_RUN_WITHOUT_CS"})
             self.assertEqual(p.read_bytes(),before)
             self.assertEqual(result["automatic_edits"],0)
     def test_empty_inventory_not_pass(self):
