@@ -25,7 +25,7 @@ def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 def norm(value):
-    return "".join(c for c in unicodedata.normalize("NFKC",value) if not c.isspace())
+    return "".join(c for c in unicodedata.normalize("NFC",value) if not c.isspace())
 
 def apply_font(run,size,thai=False):
     name=FONT if thai else LATIN_FONT
@@ -105,6 +105,10 @@ def inspect_pdf(path,expected):
     plumber_missing=[i for i,p in enumerate(expected["paragraphs"]) if norm(p) not in plumber_flat]
     markers=[m for m in expected["markers"] if norm(m) not in flat]
     missing_paragraphs=[i for i,p in enumerate(expected["paragraphs"]) if norm(p) not in flat]
+    # Compatibility normalization is diagnostic only; it cannot rescue the strict gate.
+    compat=lambda value:"".join(c for c in unicodedata.normalize("NFKC",value) if not c.isspace())
+    compat_flat=compat(extracted)
+    compatibility_only_matches=[i for i in missing_paragraphs if compat(expected["paragraphs"][i]) in compat_flat]
     label_ok=norm(LABEL) in flat and norm(PREVIEW) in flat
     hash_ok=all(norm(marker) in flat for marker in expected["source_markers"])
     return {"label":LABEL,"pdf_sha256":sha(source),"page_count":pages,
@@ -112,8 +116,9 @@ def inspect_pdf(path,expected):
             "preview_labels_present":label_ok,"fact_markers_checked":len(expected["markers"]),
             "missing_fact_markers":markers,"paragraphs_checked":len(expected["paragraphs"]),
             "missing_paragraph_indices":missing_paragraphs,
-            "paragraph_text_extractor":"Poppler pdftotext -layout; NFKC and whitespace removed",
+            "paragraph_text_extractor":"Poppler pdftotext -layout; NFC and whitespace removed",
             "pdfplumber_missing_paragraph_indices":plumber_missing,
+            "nfkc_only_paragraph_matches":compatibility_only_matches,
             "fact_text_gate":label_ok and hash_ok and not markers,
             "paragraph_text_gate":not missing_paragraphs,
             "word_visual_qa":"NOT_EXECUTED","academic_acceptance":False}
