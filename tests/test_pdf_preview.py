@@ -38,3 +38,8 @@ class PDFPreviewTests(unittest.TestCase):
             self.assertFalse(qa["academic_acceptance"])
             self.assertEqual(qa["word_visual_qa"],"NOT_EXECUTED")
             self.assertGreater(qa["page_count"],0)
+
+    def test_split_sara_am_not_normalized_away(self):
+        from pdf_preview import norm
+        self.assertNotEqual(norm("กำหนด"),norm("กําหนด"))
+        self.assertEqual(norm("ภาษา ไทย"),norm("ภาษาไทย"))
