@@ -90,9 +90,16 @@ def prepare(records):
                         "sort_key":required(r["reviewed_sort_key"]),"language":r.get("language","en"),"type":r["type"]})
     if not entries:raise ValueError("No reviewed references")
     entries.sort(key=lambda e:(e["sort_key"],e["reference_id"]))
+    study_regions={"THAILAND":0,"INTERNATIONAL":0,"UNCLASSIFIED":0}
+    for r in records:
+        if r.get("empirical_study") is True:
+            region=r.get("study_region","UNCLASSIFIED")
+            if region not in study_regions:raise ValueError("Explicit reviewed study region required")
+            study_regions[region]+=1
     return {"status":"REFERENCE_DRAFT_ONLY","entries":entries,"final_acceptance":False,
             "language_counts":{lang:sum(e["language"]==lang for e in entries) for lang in ("th","en")},
-            "language_count_targets_report_only":{"th":10,"en":5},
+            "empirical_study_regions_report_only":study_regions,
+            "study_region_targets_report_only":{"THAILAND":10,"INTERNATIONAL":5},
             "ru_apa_edition_status":"UNRESOLVED_CONFLICT_X03",
             "limitations":"Reviewer-supplied author labels, casing and order. Journal/book/thesis/website drafts only. Language counts are not country-of-study counts. No DOI existence check, Thai collation guarantee, same-author year suffix or academic acceptance."}
 
