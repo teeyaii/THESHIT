@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Mm,Pt
@@ -56,7 +57,7 @@ def build(report,output_dir):
     sec=doc.sections[0];sec.page_width=Mm(profile["paper_mm"][0]);sec.page_height=Mm(profile["paper_mm"][1])
     for side,mm in profile["margins_mm"].items():
         setattr(sec,side+"_margin",Mm(mm))
-    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Body","body_pt",False)]:
+    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Body","body_pt",False),("RA Author","author_pt",False)]:
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         s.font.name=profile["font"];s.font.size=Pt(profile[key]);s.font.bold=bold
         pr=s._element.get_or_add_rPr()
@@ -66,6 +67,9 @@ def build(report,output_dir):
         s.paragraph_format.line_spacing=profile["line_spacing"]
         s.paragraph_format.widow_control=True
         s.paragraph_format.keep_with_next=bold
+        if name=="RA Title":s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
+        if name=="RA Author":s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.RIGHT
+        if name=="RA Body":s.paragraph_format.first_line_indent=Mm(profile["body_first_line_mm"])
     doc.core_properties.author="THESHIT synthetic fixture"
     sec.header.paragraphs[0].text=NOTICE
     sec.header.paragraphs[0].style=doc.styles["RA Body"]
@@ -73,7 +77,9 @@ def build(report,output_dir):
     sec.footer.paragraphs[0].style=doc.styles["RA Body"]
     expected=[[ "RA Title",NOTICE],["RA Body","Source SHA256: "+data["source_sha256"]]]
     for heading,body in data["sections"]:
-        expected.extend([["RA Heading",heading],["RA Body",body]])
+        if heading=="Title":expected.append(["RA Title",body])
+        elif heading=="Author information":expected.append(["RA Author",body])
+        else:expected.extend([["RA Heading",heading],["RA Body",body]])
     for style,text in expected:
         add_script_runs(doc.add_paragraph(style=style),text)
     path=out/"SYNTHETIC_RU_article.docx";doc.save(path)
@@ -95,4 +101,5 @@ def verify(output_dir):
         raise ValueError("Missing synthetic markers")
     return {"status":"SYNTHETIC_ARTICLE_STRUCTURE_QA_PASS","paragraphs_checked":len(doc.paragraphs),
             "facts_in_manifest":len(m["facts"]),"official_article_template_verified":False,
+            "left_margin_status":"UNRESOLVED_CONFLICT_X05",
             "word_visual_qa":"NOT_EXECUTED","final_acceptance":False}
