@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "scope": "SYNTHETIC_ONLY",
+  "primary_inference": "HC3",
+  "display_precision": {
+    "statistic": 3,
+    "p": 3
+  },
+  "cooks_threshold": "4/n_complete",
+  "academic_plan_approved": false
+}
