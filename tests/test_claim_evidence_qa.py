@@ -48,3 +48,18 @@ class ClaimTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             args=self.fixture(Path(d));args[4][0]["evidence_record_sha256"]["E1"]="0"*64
             self.assertFalse(reconcile(*args)["declared_links_consistent"])
+
+    def test_multi_source_color_requires_all_reconciled_sources(self):
+        from claim_evidence_qa import audit_multi_source_spans
+        with tempfile.TemporaryDirectory() as d:
+            path,m,idx,decisions,links,sources,crops=self.fixture(Path(d))
+            spans=[{"claim_id":"CL1","sources":["R1"],"color":"FFE066"}]
+            args=(path,m,idx,decisions,links,sources,crops)
+            result=audit_multi_source_spans(*args,spans,source_colors={"R1":"FFE066"},multi_source_color="AAFFAA")
+            self.assertEqual(result["source_mapping"][0]["sources"],["R1"])
+            self.assertFalse(result["final_acceptance"])
+            for wrong in (["R1","R2"],["R1","R1"],[]):
+                with self.assertRaises(ValueError):
+                    audit_multi_source_spans(*args,[dict(spans[0],sources=wrong)],source_colors={"R1":"FFE066","R2":"FFBBBB"},multi_source_color="AAFFAA")
+            with self.assertRaises(ValueError):
+                audit_multi_source_spans(path,m,idx,decisions[:1],links,sources,crops,spans,source_colors={"R1":"FFE066"},multi_source_color="AAFFAA")
