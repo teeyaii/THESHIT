@@ -10,6 +10,7 @@ from docx.shared import Mm,Pt
 from academic_writing import draft,verify_draft
 from statistical_engine import LABEL
 from report_engine import source_hash
+from ru_word_runs import add_script_runs
 
 PROFILE=Path(__file__).with_name("config")/"ru_article_profile.example.json"
 NOTICE="SYNTHETIC ARTICLE STRUCTURE — NOT FOR SUBMISSION"
@@ -74,7 +75,7 @@ def build(report,output_dir):
     for heading,body in data["sections"]:
         expected.extend([["RA Heading",heading],["RA Body",body]])
     for style,text in expected:
-        doc.add_paragraph(text,style=style)
+        add_script_runs(doc.add_paragraph(style=style),text)
     path=out/"SYNTHETIC_RU_article.docx";doc.save(path)
     data.update(expected_paragraphs=expected,docx_sha256=digest(path),
                 layout_profile_sha256=digest(PROFILE))
