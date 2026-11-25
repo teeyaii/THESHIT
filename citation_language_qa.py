@@ -66,6 +66,9 @@ PATTERNS={
  "ZERO_WIDTH_OR_SOFT_HYPHEN":r"[\u200b\u200c\u200d\ufeff\u00ad]",
  "UNREPLACED_PLACEHOLDER":r"\b(?:TODO|TBD|INSERT CITATION)\b|\[ใส่อ้างอิง\]",
  "DOUBLE_PUNCTUATION":r"[!?]{2,}|[.]{4,}",
+ "THAI_LATIN_MULTISPACE":r"(?:[\u0e00-\u0e7f][ \u00a0]{2,}[A-Za-z()]|[A-Za-z()][ \u00a0]{2,}[\u0e00-\u0e7f])",
+ "TRAILING_PARAGRAPH_SPACE":r"[ \u00a0]+$",
+ "PARENTHETICAL_ENGLISH_CASE_REVIEW":r"\([A-Z][A-Za-z]+(?:[ -][A-Za-z]+)*\)",
 }
 def language_candidates(path):
     inv=inventory(path)
@@ -78,4 +81,4 @@ def language_candidates(path):
                 warnings.append({"part":p["part"],"paragraph":p["paragraph"],"start":m.start(),"end":m.end(),"code":code})
     return {"status":"EDITORIAL_CANDIDATES_ONLY","source_sha256":inv["source_sha256"],
             "warnings":warnings,"automatic_edits":0,"final_acceptance":False,
-            "limitations":"Some whitespace, zero-width marks and punctuation are legitimate. Thai script warnings concern direct run properties only; inherited styles and visual layout require separate review. Human review required; no AI authorship detection or automatic language correction."}
+            "limitations":"Some whitespace, zero-width marks, punctuation and capitalized proper names/acronyms are legitimate. Thai script warnings concern direct run properties only; inherited styles and visual layout require separate review. Human review required; no AI authorship detection or automatic language correction."}
