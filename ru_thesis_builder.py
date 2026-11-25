@@ -42,11 +42,12 @@ def font_props(style,font,size,bold=False):
 def make_styles(doc,profile):
     font=profile["body"]["font"];body=profile["body"]["size_pt"]
     specs={"RU Body":(body,False),"RU Chapter":(profile["chapter_size_pt"],profile["chapter_bold"]),
-           "RU Front":(22,True),"RU TOC Title":(profile["toc_title_pt"],True),"RU Bibliography Title":(profile["bibliography_pt"],True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
-           "RU Table":(body,False),"RU Caption":(body,False),
+           "RU Front":(22,True),"RU Front Entry":(22,True),"RU TOC Title":(profile["toc_title_pt"],True),"RU Bibliography Title":(profile["bibliography_pt"],True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
+           "RU Table":(body,False),"RU Caption":(body,False),"RU Table Label":(body,True),
            "RU Reference":(profile["bibliography_pt"],False),
            "RU Appendix":(profile["appendix_divider_pt"],True),
-           "RU Notice":(body,True)}
+           "RU Notice":(body,True),"RU Page Number":(profile["toc_page_number_pt"],False),
+           "RU Subheading 3":(18,False),"RU Subheading 4":(18,False),"RU Subheading 5":(18,False)}
     for name,(size,bold) in specs.items():
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         font_props(s,font,size,bold)
@@ -56,13 +57,17 @@ def make_styles(doc,profile):
         p.widow_control=True;p.keep_with_next=False;p.keep_together=False
         p.first_line_indent=Mm(profile["body"]["first_line_mm"] if name=="RU Body" else 0)
         p.alignment=WD_ALIGN_PARAGRAPH.LEFT
-        if name in ("RU Chapter","RU Front","RU TOC Title","RU Bibliography Title","RU Appendix"):
+        if name in ("RU Chapter","RU Front","RU Front Entry","RU TOC Title","RU Bibliography Title","RU Appendix"):
             p.alignment=WD_ALIGN_PARAGRAPH.CENTER
             p.keep_with_next=True;p.keep_together=True;p.page_break_before=True
-        if name in ("RU Subheading","RU Subheading 2"):
+        if name=="RU Page Number":p.alignment=WD_ALIGN_PARAGRAPH.CENTER
+        if name=="RU Reference":
+            p.left_indent=Mm(12.7);p.first_line_indent=Mm(-12.7)
+        if name.startswith("RU Subheading"):
             p.keep_with_next=True;p.keep_together=True
-        if name in ("RU Chapter","RU Subheading","RU Subheading 2"):
-            s._element.get_or_add_pPr().append(element("outlineLvl",val=0 if name=="RU Chapter" else (1 if name=="RU Subheading" else 2)))
+        if name=="RU Chapter" or name.startswith("RU Subheading"):
+            level=0 if name=="RU Chapter" else (1 if name=="RU Subheading" else int(name.rsplit(" ",1)[1]))
+            s._element.get_or_add_pPr().append(element("outlineLvl",val=level))
 
 def field(paragraph,instruction,placeholder):
     r=paragraph.add_run()
@@ -82,7 +87,30 @@ def set_section(sec,profile):
     sec.bottom_margin=Mm(profile["margins_mm"]["bottom"])
     # One uniform numbered-page margin is a provisional preview convention.
     sec.top_margin=Mm(profile["margins_mm"]["top_by_role"]["numbered_page"])
-    sec.header_distance=Mm(12.7);sec.footer_distance=Mm(12.7)
+    sec.header_distance=Mm(25.4);sec.footer_distance=Mm(12.7)
+
+def numbered_section(doc,profile,*,restart=False):
+    """Per-role sections; actual page numbering/first-page margins require Word."""
+    sec=doc.add_section(WD_SECTION_START.NEW_PAGE);set_section(sec,profile)
+    sec.different_first_page_header_footer=True
+    old=sec._sectPr.find(qn("w:pgNumType"))
+    if old is not None:sec._sectPr.remove(old)
+    if restart:
+        sec._sectPr.insert_element_before(element("pgNumType",fmt="decimal",start=1),"w:cols","w:formProt","w:vAlign","w:noEndnote","w:titlePg","w:textDirection","w:bidi","w:rtlGutter","w:docGrid","w:sectPrChange")
+    for header in (sec.header,sec.first_page_header):
+        header.is_linked_to_previous=False
+    head=sec.header.paragraphs[0];head.style=doc.styles["RU Page Number"]
+    field(head,"PAGE","PAGE PENDING")
+    for footer in (sec.footer,sec.first_page_footer):
+        footer.is_linked_to_previous=False
+        foot=footer.paragraphs[0];foot.style=doc.styles["RU Notice"];foot.text=NOTICE
+    return sec
+
+def horizontal_borders(table):
+    borders=element("tblBorders")
+    for side in ("top","left","bottom","right","insideH","insideV"):
+        borders.append(element(side,val="nil" if side in ("left","right","insideV") else "single",sz=4,color="000000"))
+    table._tbl.tblPr.insert_element_before(borders,"w:shd","w:tblLayout","w:tblCellMar","w:tblLook","w:tblCaption","w:tblDescription")
 
 def plan(report):
     d=draft(report);verify_draft(report,d)
@@ -114,30 +142,24 @@ def build(report,output_dir):
     add("ตำแหน่งข้อมูลตามแม่แบบที่ได้รับอนุมัติ")
     add("คำปฏิญาณตน","RU Front")
     add("รอผู้วิจัยตรวจและลงนามด้วยตนเอง ไม่สร้างคำรับรองหรือลายเซ็น")
-    add("บทคัดย่อ","RU Front")
+    add("บทคัดย่อ","RU Front Entry")
     add("รอข้อความบทคัดย่อภาษาไทยจากงานวิจัยจริงที่ได้รับอนุมัติ")
-    add("Abstract","RU Front")
+    add("Abstract","RU Front Entry")
     add("English abstract pending approved research.")
-    add("กิตติกรรมประกาศ","RU Front")
+    add("กิตติกรรมประกาศ","RU Front Entry")
     add("รอข้อความจากผู้วิจัย")
     add("สารบัญ","RU TOC Title")
     toc=doc.add_paragraph(style="RU Body")
-    field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2,RU Subheading 2,3" \\h \\z',"TOC PENDING WORD UPDATE")
-    add("สารบัญตาราง","RU Front")
-    add("รออัปเดตสารบัญตารางใน Word")
-    add("สารบัญภาพ","RU Front")
-    add("รออัปเดตสารบัญภาพใน Word")
+    field(toc,'TOC \\t "RU Chapter,1,RU Subheading,2,RU Subheading 2,3,RU Subheading 3,4,RU Subheading 4,5,RU Subheading 5,6,RU Front Entry,1,RU Bibliography Title,1,RU Appendix,1" \\h \\z',"TOC PENDING WORD UPDATE")
+    add("สารบัญตาราง","RU Front Entry")
+    field(doc.add_paragraph(style="RU Body"),'TOC \\c "ตาราง"'.replace("\\c","\\c"),"TABLE LIST PENDING WORD UPDATE")
+    add("สารบัญภาพ","RU Front Entry")
+    field(doc.add_paragraph(style="RU Body"),'TOC \\c "ภาพ"'.replace("\\c","\\c"),"FIGURE LIST PENDING WORD UPDATE")
     # Field placeholder is not an accepted table of contents.
-    main=doc.add_section(WD_SECTION_START.NEW_PAGE)
-    set_section(main,profile)
-    main.header.is_linked_to_previous=False
-    head=main.header.paragraphs[0];head.style=doc.styles["RU Notice"];head.text=NOTICE
-    main.footer.is_linked_to_previous=False
-    foot=main.footer.paragraphs[0];foot.style=doc.styles["RU Notice"];foot.text=NOTICE
-    field(head,"PAGE","PAGE PENDING")
     for n,t in CHAPTERS:
-        heading=add("บทที่ "+n+"\n"+t,"RU Chapter")
-        if n=="1":heading.paragraph_format.page_break_before=False
+        numbered_section(doc,profile,restart=n=="1")
+        heading=add("บทที่ "+n+"\n\n"+t,"RU Chapter")
+        heading.paragraph_format.page_break_before=False
         if n in ("1","2","3"):
             add("ส่วนนี้เป็นตำแหน่งสำหรับเนื้อหาที่ได้รับอนุมัติ ยังไม่มีข้อค้นพบหรือแหล่งอ้างอิงจริง")
         if n=="4":
@@ -145,23 +167,27 @@ def build(report,output_dir):
             for item in p["numeric_draft"]["paragraphs"]:
                 if item["section"]=="Results":
                     add(item["text"])
-            add("ตารางตัวอย่างค่าประมาณจากข้อมูลสังเคราะห์","RU Caption")
+            label=doc.add_paragraph(style="RU Table Label");add_script_runs(label,"ตาราง ");field(label,'SEQ ตาราง \\* ARABIC',"1")
+            expected.append(["RU Table Label","ตาราง 1"])
+            add("ค่าประมาณจากข้อมูลสังเคราะห์","RU Caption")
             rows=[["Variable","B","HC3 p"]]+[[r["variable"],format(r["b"],".8g"),format(r["hc3_p"],".8g")]
                                              for r in report["model"]["coefficients"]]
             table=doc.add_table(rows=len(rows),cols=3)
-            table.style="Table Grid"
+            table.style="Table Normal";horizontal_borders(table)
             table.rows[0]._tr.get_or_add_trPr().append(element("tblHeader",val="true"))
             for i,row in enumerate(rows):
                 for j,value in enumerate(row):
                     para=table.cell(i,j).paragraphs[0];para.style=doc.styles["RU Table"];add_script_runs(para,value)
         if n=="5":
             add("การอภิปรายผลถูกระงับจนกว่าจะมีหลักฐานและผลการศึกษาจริงที่ผ่านการตรวจรับ")
-    add("บรรณานุกรม","RU Bibliography Title")
+    numbered_section(doc,profile)
+    add("บรรณานุกรม","RU Bibliography Title").paragraph_format.page_break_before=False
     add("ยังไม่มีรายการอ้างอิงที่ได้รับการตรวจรับ ไม่สร้างรายการอ้างอิงสมมติ","RU Reference")
-    add("ภาคผนวก","RU Appendix")
+    numbered_section(doc,profile)
+    add("ภาคผนวก","RU Appendix").paragraph_format.page_break_before=False
     add("รอเอกสารที่ได้รับอนุมัติ ไม่มีแบบสอบถามหรือข้อมูลบุคคลในตัวอย่างนี้")
     add("แบบเปิดเผยการใช้ AI — รอแบบจริงและการยืนยันโดยผู้วิจัย","RU Subheading")
-    add("ประวัติผู้เขียน","RU Front")
+    add("ประวัติผู้เขียน","RU Front Entry")
     add("รอข้อมูลที่ได้รับอนุญาต ไม่สร้างประวัติสมมติ")
     doc.settings.element.append(element("updateFields",val="true"))
     target=out/"SYNTHETIC_RU_structure.docx";doc.save(target)
@@ -178,13 +204,13 @@ def verify(output_dir):
     if manifest["label"]!=LABEL or manifest["profile"]!=PROFILE or manifest["docx_sha256"]!=sha(path):
         raise ValueError("Synthetic structure provenance mismatch")
     doc=Document(path)
-    actual=[[p.style.name,p.text] for p in doc.paragraphs if p.text.strip() and p.text!="TOC PENDING WORD UPDATE"]
+    actual=[[p.style.name,p.text] for p in doc.paragraphs if p.text.strip() and p.text not in {"TOC PENDING WORD UPDATE","TABLE LIST PENDING WORD UPDATE","FIGURE LIST PENDING WORD UPDATE"}]
     if actual!=manifest["expected_paragraphs"]:
         raise ValueError("Paragraph text/style mismatch")
     if len(doc.tables)!=1 or [[c.text for c in r.cells] for r in doc.tables[0].rows]!=manifest["table_rows"]:
         raise ValueError("Table mismatch")
     chapters=[p for p in doc.paragraphs if p.style.name=="RU Chapter"]
-    if [p.text for p in chapters]!=["บทที่ "+n+"\n"+t for n,t in CHAPTERS]:
+    if [p.text for p in chapters]!=["บทที่ "+n+"\n\n"+t for n,t in CHAPTERS]:
         raise ValueError("Chapter order mismatch")
     profile=get_profile(PROFILE)
     for name,size in (("RU Body",profile["body"]["size_pt"]),("RU Chapter",profile["chapter_size_pt"])):
@@ -197,8 +223,11 @@ def verify(output_dir):
     instructions=[(x.text or "").strip() for x in doc._element.iter(qn("w:instrText"))]
     if not any(x.startswith("TOC ") for x in instructions):
         raise ValueError("TOC field missing")
-    if len(doc.sections)!=2:
-        raise ValueError("Front/main section count mismatch")
+    if len(doc.sections)!=8 or not all(s.different_first_page_header_footer for s in doc.sections[1:]):
+        raise ValueError("Expected front, five chapter, bibliography and appendix sections")
+    pg=doc.sections[1]._sectPr.find(qn("w:pgNumType"))
+    if pg is None or pg.get(qn("w:start"))!="1" or any(s._sectPr.find(qn("w:pgNumType")) is not None for s in doc.sections[2:]):
+        raise ValueError("Page number restart/continuation mismatch")
     return {"status":"SYNTHETIC_STRUCTURE_QA_PASS","chapters":len(chapters),
             "paragraphs_checked":len(actual),"table_rows_checked":len(manifest["table_rows"]),
             "profile":PROFILE,"docx_sha256":sha(path),"toc_status":"FIELD_PRESENT_NOT_UPDATED",
