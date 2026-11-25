@@ -40,10 +40,10 @@ def tables(report):
           [k,*[report["correlation"][j][k] for j in fields]]
           for k in fields],
       "Model":[["Metric","Value"],["R squared",model["r_squared"]],
-               ["Adjusted R squared",model["adjusted_r_squared"]],["F",model["f"]],
-               ["F p",model["f_p"]],["Residual df",model["df_residual"]],
+               ["Adjusted R squared",model["adjusted_r_squared"]],["OLS F",model["f"]],
+               ["OLS F p",model["f_p"]],["HC3 Wald F",model["hc3_f"]],["HC3 F p",model["hc3_f_p"]],["Primary inference",model["primary_inference"]],["Model df",model["df_model"]],["Residual df",model["df_residual"]],
                ["Independent check",model["independent_ols_hc3_check"]]],
-      "Coefficients":[["Variable","B","Beta","SE","p","CI lower","CI upper",
+      "Coefficients":[["Variable","B","Beta","OLS SE","OLS p","OLS CI lower","OLS CI upper",
                        "HC3 SE","HC3 p","HC3 lower","HC3 upper","VIF"]]+[
           [r["variable"],r["b"],r["beta_standardized"],r["se"],r["p"],*r["ci95"],
            r["hc3_se"],r["hc3_p"],*r["hc3_ci95"],r["vif"]]
