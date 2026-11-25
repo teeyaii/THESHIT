@@ -30,6 +30,11 @@ class RUThesisTests(unittest.TestCase):
             self.assertEqual(doc.styles["RU Body"].font.name,"Browallia New")
             self.assertEqual(doc.styles["RU Body"].paragraph_format.first_line_indent.inches,0.5)
             self.assertTrue(doc.styles["RU Chapter"].paragraph_format.page_break_before)
+            self.assertEqual(len(doc.sections),8)
+            self.assertTrue(all(sec.different_first_page_header_footer for sec in doc.sections[1:]))
+            self.assertEqual(doc.sections[1].header_distance.inches,1)
+            self.assertEqual(doc.styles["RU Reference"].paragraph_format.first_line_indent.inches,-0.5)
+            self.assertIn("ตาราง 1",[p.text for p in doc.paragraphs])
             with self.assertRaises(FileExistsError):
                 build(demo_report(),p)
     def test_tampered_document(self):
