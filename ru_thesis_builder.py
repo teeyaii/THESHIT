@@ -21,6 +21,13 @@ CHAPTERS=[("1","บทนำ"),("2","แนวคิด ทฤษฎี แล�
           ("3","วิธีดำเนินการวิจัย"),("4","ผลการวิเคราะห์ข้อมูล"),
           ("5","สรุปผล อภิปรายผล และข้อเสนอแนะ")]
 
+# Synthetic page plan: chapter 4 includes an explicit continuation page.
+# Word top margin applies to the entire section, never just the first page.
+SECTION_ROLES=("numbered_page","chapter_opening","chapter_opening","chapter_opening",
+               "chapter_opening","numbered_page","chapter_opening","numbered_page","numbered_page")
+CHAPTER_SECTION_INDICES=(1,2,3,4,6)
+CONTINUATION_INDEX=5
+
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -43,7 +50,7 @@ def make_styles(doc,profile):
     font=profile["body"]["font"];body=profile["body"]["size_pt"]
     specs={"RU Body":(body,False),"RU Chapter":(profile["chapter_size_pt"],profile["chapter_bold"]),
            "RU Front":(22,True),"RU Front Entry":(22,True),"RU TOC Title":(profile["toc_title_pt"],True),"RU Bibliography Title":(profile["bibliography_pt"],True),"RU Subheading":(profile["heading_sizes_pt"][0],profile["heading_bold"]), "RU Subheading 2":(profile["heading_sizes_pt"][1],profile["heading_bold"]),
-           "RU Table":(body,False),"RU Caption":(body,False),"RU Table Label":(body,True),
+           "RU Table":(body,False),"RU Caption":(profile["table_caption_pt"],False),"RU Table Label":(body,True),
            "RU Reference":(profile["bibliography_pt"],False),
            "RU Appendix":(profile["appendix_divider_pt"],True),
            "RU Notice":(body,True),"RU Page Number":(profile["toc_page_number_pt"],False),
@@ -80,19 +87,18 @@ def field(paragraph,instruction,placeholder):
     t=element("t");t.text=placeholder;r._r.append(t)
     r._r.append(element("fldChar",fldCharType="end"))
 
-def set_section(sec,profile):
+def set_section(sec,profile,*,role="numbered_page"):
     sec.page_width=Mm(profile["paper_mm"][0]);sec.page_height=Mm(profile["paper_mm"][1])
     sec.left_margin=Mm(profile["margins_mm"]["left"])
     sec.right_margin=Mm(profile["margins_mm"]["right"])
     sec.bottom_margin=Mm(profile["margins_mm"]["bottom"])
-    # One uniform numbered-page margin is a provisional preview convention.
-    sec.top_margin=Mm(profile["margins_mm"]["top_by_role"]["numbered_page"])
+    sec.top_margin=Mm(profile["margins_mm"]["top_by_role"][role])
     sec.header_distance=Mm(25.4);sec.footer_distance=Mm(12.7)
 
-def numbered_section(doc,profile,*,restart=False):
-    """Per-role sections; actual page numbering/first-page margins require Word."""
-    sec=doc.add_section(WD_SECTION_START.NEW_PAGE);set_section(sec,profile)
-    sec.different_first_page_header_footer=True
+def numbered_section(doc,profile,*,restart=False,role="numbered_page",suppress_first_number=True):
+    """Explicit page-role boundary. Not an automatic page-break/repagination engine."""
+    sec=doc.add_section(WD_SECTION_START.NEW_PAGE);set_section(sec,profile,role=role)
+    sec.different_first_page_header_footer=suppress_first_number
     old=sec._sectPr.find(qn("w:pgNumType"))
     if old is not None:sec._sectPr.remove(old)
     if restart:
@@ -157,16 +163,20 @@ def build(report,output_dir):
     field(doc.add_paragraph(style="RU Body"),'TOC \\c "ภาพ"'.replace("\\c","\\c"),"FIGURE LIST PENDING WORD UPDATE")
     # Field placeholder is not an accepted table of contents.
     for n,t in CHAPTERS:
-        numbered_section(doc,profile,restart=n=="1")
+        numbered_section(doc,profile,restart=n=="1",role="chapter_opening")
         heading=add("บทที่ "+n+"\n\n"+t,"RU Chapter")
         heading.paragraph_format.page_break_before=False
         if n in ("1","2","3"):
             add("ส่วนนี้เป็นตำแหน่งสำหรับเนื้อหาที่ได้รับอนุมัติ ยังไม่มีข้อค้นพบหรือแหล่งอ้างอิงจริง")
         if n=="4":
             add("ผลทดสอบสังเคราะห์เท่านั้น ไม่ใช่ผลวิจัย","RU Subheading")
-            for item in p["numeric_draft"]["paragraphs"]:
-                if item["section"]=="Results":
-                    add(item["text"])
+            results=[item for item in p["numeric_draft"]["paragraphs"] if item["section"]=="Results"]
+            if len(results)<2:raise ValueError("Expected synthetic continuation content")
+            add(results[0]["text"])
+            # Known fixture boundary: first results paragraph is on the opening
+            # page, remaining results and table use the numbered-page margin.
+            numbered_section(doc,profile,role="numbered_page",suppress_first_number=False)
+            for item in results[1:]:add(item["text"])
             label=doc.add_paragraph(style="RU Table Label");add_script_runs(label,"ตาราง ");field(label,'SEQ ตาราง \\* ARABIC',"1")
             expected.append(["RU Table Label","ตาราง 1"])
             add("ค่าประมาณจากข้อมูลสังเคราะห์","RU Caption")
@@ -195,6 +205,7 @@ def build(report,output_dir):
     target=out/"SYNTHETIC_RU_structure.docx";doc.save(target)
     manifest={"label":LABEL,"notice":NOTICE,"profile":PROFILE,"source_sha256":p["source_sha256"],
               "expected_paragraphs":expected,"table_rows":rows,"docx_sha256":sha(target),
+              "section_roles":list(SECTION_ROLES),"pagination_status":"FIXTURE_BOUNDARIES_WORD_VISUAL_QA_PENDING",
               "pending":p["pending"],"final_acceptance":False}
     (out/"SYNTHETIC_structure_manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
     return verify(out)
@@ -215,7 +226,7 @@ def verify(output_dir):
     if [p.text for p in chapters]!=["บทที่ "+n+"\n\n"+t for n,t in CHAPTERS]:
         raise ValueError("Chapter order mismatch")
     profile=get_profile(PROFILE)
-    for name,size in (("RU Body",profile["body"]["size_pt"]),("RU Chapter",profile["chapter_size_pt"])):
+    for name,size in (("RU Body",profile["body"]["size_pt"]),("RU Chapter",profile["chapter_size_pt"]),("RU Caption",profile["table_caption_pt"])):
         style=doc.styles[name]
         rpr=style._element.rPr
         if style.font.name!=profile["body"]["font"] or style.font.size.pt!=size or rpr.rFonts.get(qn("w:cs"))!=profile["body"]["font"] or rpr.find(qn("w:szCs")).get(qn("w:val"))!=str(size*2):
@@ -225,14 +236,34 @@ def verify(output_dir):
     instructions=[(x.text or "").strip() for x in doc._element.iter(qn("w:instrText"))]
     if not any(x.startswith("TOC ") for x in instructions):
         raise ValueError("TOC field missing")
-    if len(doc.sections)!=8 or not all(s.different_first_page_header_footer for s in doc.sections[1:]):
-        raise ValueError("Expected front, five chapter, bibliography and appendix sections")
+    if manifest.get("section_roles")!=list(SECTION_ROLES) or len(doc.sections)!=len(SECTION_ROLES):
+        raise ValueError("Explicit synthetic section plan mismatch")
+    for i,(sec,role) in enumerate(zip(doc.sections,SECTION_ROLES)):
+        if abs(sec.top_margin.mm-profile["margins_mm"]["top_by_role"][role])>.05:
+            raise ValueError("Section top margin mismatch")
+        if i and (sec.start_type!=WD_SECTION_START.NEW_PAGE or
+                  sec.different_first_page_header_footer!=(i!=CONTINUATION_INDEX)):
+            raise ValueError("Section break or first-page numbering mismatch")
+    # Confirm chapter headings really belong to the opening sections (rather
+    # than merely comparing a list of section properties).
+    current=0;chapter_locations=[];continuation_content=False
+    for para in doc.paragraphs:
+        if para.style.name=="RU Chapter":chapter_locations.append(current)
+        if current==CONTINUATION_INDEX and para.text.strip():continuation_content=True
+        if para._p.xpath("./w:pPr/w:sectPr"):current+=1
+    if tuple(chapter_locations)!=CHAPTER_SECTION_INDICES or not continuation_content:
+        raise ValueError("Chapter/continuation section content mismatch")
+    caption=doc.styles["RU Caption"]
+    if caption.font.bold is not False or caption._element.rPr.find(qn("w:bCs")).get(qn("w:val"))!="0":
+        raise ValueError("Caption must be regular weight")
     pg=doc.sections[1]._sectPr.find(qn("w:pgNumType"))
     if pg is None or pg.get(qn("w:start"))!="1" or any(s._sectPr.find(qn("w:pgNumType")) is not None for s in doc.sections[2:]):
         raise ValueError("Page number restart/continuation mismatch")
     return {"status":"SYNTHETIC_STRUCTURE_QA_PASS","chapters":len(chapters),
             "paragraphs_checked":len(actual),"table_rows_checked":len(manifest["table_rows"]),
             "profile":PROFILE,"docx_sha256":sha(path),"toc_status":"FIELD_PRESENT_NOT_UPDATED",
+            "section_roles":list(SECTION_ROLES),
+            "pagination_status":"FIXTURE_BOUNDARIES_WORD_VISUAL_QA_PENDING",
             "word_visual_qa":"NOT_EXECUTED","final_acceptance":False}
 
 def demo_report():

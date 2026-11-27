@@ -163,7 +163,7 @@
         "approved cohort Word template 1-69 not retrieved; 1-68 template is historical",
         "paragraph spacing, exact cover and section-specific pagination require template and Word visual review",
         "AI disclosure form must be completed truthfully by student following current program policy; not generated as consent",
-        "X-01..X-11 recorded separately; no advisor decision evidence supplied; provisional working settings do not resolve conflicts"
+        "X-08 reconciled as distinct roles from p11; all other unresolved conflicts and provisional owner choices retained; no advisor decision invented"
       ],
       "latest_guide_url": "https://drive.google.com/file/d/1jNSYUkPM5QWxQ9F9nZgfeJ0A6NftXkHs/view?usp=sharing",
       "official_listing_url": "https://mba-campus.ru.ac.th/index.php",
@@ -218,7 +218,6 @@
       "ai_disclosure_form_listed": true,
       "additional_pages_basis": "Claude academic QA 2026-11-25; independent retest required",
       "table_text_min_pt": 14,
-      "table_caption_candidate_pt": 12,
       "heading_weight_alignment_status": "UNRESOLVED_CONFLICT",
       "heading_levels": 5,
       "manual_conflicts": [
@@ -283,8 +282,11 @@
           "topic": "Caption size",
           "a": "p11 table text >=14",
           "b": "p11 caption 12",
-          "status": "UNRESOLVED_CONFLICT",
-          "decision_evidence": null
+          "status": "RECONCILED_DISTINCT_ROLES",
+          "decision_evidence": {
+            "basis": "RU 2569 printed p11 / physical13; independently checked 2026-11-27; table cell minimum and regular caption are distinct",
+            "source_sha256": "11d970ddb0d05905fbf1003102d177f8019201e75dc1bc427f0054bbce4c8783"
+          }
         },
         {
           "id": "X-09",
@@ -310,7 +312,8 @@
           "status": "UNRESOLVED_CONFLICT",
           "decision_evidence": null
         }
-      ]
+      ],
+      "table_caption_pt": 12
     }
   }
 }

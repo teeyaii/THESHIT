@@ -51,7 +51,7 @@ def run(out,commit,*,pdf=False):
              "RUSubheading":"heading1","RUSubheading2":"heading2","RUTable":"table","RUCaption":"caption","RUTableLabel":"table_label","RUSubheading3":"heading3","RUSubheading4":"heading4","RUSubheading5":"heading5",
              "RUReference":"bibliography","RUAppendix":"appendix_divider"}
     # Non-TOC front titles and flexible table/caption sizes stay unresolved; notice is a fixture convention.
-    style_qa=audit_styles(thesis_path,mapping)
+    style_qa=audit_styles(thesis_path,mapping,section_roles=thesis_qa["section_roles"])
     write(root/"SYNTHETIC_style_inventory.json",style_qa)
     write(root/"SYNTHETIC_language_candidates.json",language_candidates(thesis_path))
     preview={"status":"NOT_EXECUTED","word_visual_qa":"NOT_EXECUTED"}

@@ -57,7 +57,7 @@ def build(report,output_dir):
     sec=doc.sections[0];sec.page_width=Mm(profile["paper_mm"][0]);sec.page_height=Mm(profile["paper_mm"][1])
     for side,mm in profile["margins_mm"].items():
         setattr(sec,side+"_margin",Mm(mm))
-    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Body","body_pt",False),("RA Author","author_pt",False)]:
+    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Abstract Heading","heading_pt",True),("RA Body","body_pt",False),("RA Author","author_pt",False)]:
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         s.font.name=profile["font"];s.font.size=Pt(profile[key]);s.font.bold=bold
         pr=s._element.get_or_add_rPr()
@@ -68,7 +68,7 @@ def build(report,output_dir):
         s.paragraph_format.line_spacing=profile["line_spacing"]
         s.paragraph_format.widow_control=True
         s.paragraph_format.keep_with_next=bold
-        if name=="RA Title":s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
+        if name in ("RA Title","RA Abstract Heading"):s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
         if name=="RA Author":s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.RIGHT
         if name=="RA Body":s.paragraph_format.first_line_indent=Mm(profile["body_first_line_mm"])
     doc.core_properties.author="THESHIT synthetic fixture"
@@ -80,6 +80,7 @@ def build(report,output_dir):
     for heading,body in data["sections"]:
         if heading=="Title":expected.append(["RA Title",body])
         elif heading=="Author information":expected.append(["RA Author",body])
+        elif heading in ("บทคัดย่อ","Abstract"):expected.extend([["RA Abstract Heading",heading],["RA Body",body]])
         elif heading in ("Methods fixture","Results fixture"):expected.append(["RA Body",body])
         else:expected.extend([["RA Heading",heading],["RA Body",body]])
     for style,text in expected:
@@ -99,6 +100,17 @@ def verify(output_dir):
     doc=Document(path)
     if [[p.style.name,p.text] for p in doc.paragraphs]!=m["expected_paragraphs"]:
         raise ValueError("Article content/style mismatch")
+    abstracts=[p for p in doc.paragraphs if p.text in ("บทคัดย่อ","Abstract")]
+    if [p.text for p in abstracts]!=["บทคัดย่อ","Abstract"]:
+        raise ValueError("Bilingual abstract headings missing")
+    for p in abstracts:
+        st=p.style;pr=st._element.rPr
+        alignment=p.alignment if p.alignment is not None else st.paragraph_format.alignment
+        if (st.name!="RA Abstract Heading" or alignment!=WD_ALIGN_PARAGRAPH.CENTER or
+                st.font.size.pt!=16 or st.font.bold is not True or
+                pr.find(qn("w:szCs")).get(qn("w:val"))!="32" or
+                pr.find(qn("w:bCs")).get(qn("w:val"))!="1"):
+            raise ValueError("Abstract heading formatting mismatch")
     if doc.sections[0].header.paragraphs[0].text!=NOTICE or doc.sections[0].footer.paragraphs[0].text!=NOTICE:
         raise ValueError("Missing synthetic markers")
     return {"status":"SYNTHETIC_ARTICLE_STRUCTURE_QA_PASS","paragraphs_checked":len(doc.paragraphs),

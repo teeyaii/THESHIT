@@ -77,10 +77,26 @@ class RUStyleTests(unittest.TestCase):
                      "RUFront":"front_title","RUNotice":"fixture_notice","RUCaption":"caption"}
             qa=audit_styles(path,mapping)
             sizes=[c for c in qa["checks"] if c["field"]=="sz"]
-            self.assertEqual([c["expected"] for c in sizes],[20,18,22,18,None,16,None])
-            self.assertEqual([c["status"] for c in sizes],["PASS","PASS","PASS","PASS","UNRESOLVED","PASS","UNRESOLVED"])
+            self.assertEqual([c["expected"] for c in sizes],[20,18,22,18,None,16,12])
+            self.assertEqual([c["status"] for c in sizes],["PASS","PASS","PASS","PASS","UNRESOLVED","PASS","PASS"])
             self.assertEqual(sizes[5]["basis"],"SYNTHETIC_FIXTURE_CONVENTION_NOT_UNIVERSITY_RULE")
             self.assertFalse(qa["final_acceptance"])
             doc.paragraphs[1].runs[0].font.size=Pt(20)
             doc.save(path)
             self.assertTrue(any(c["location"].startswith("body/p:1/") and c["field"]=="sz" and c["status"]=="FAIL" for c in audit_styles(path,mapping)["checks"]))
+
+    def test_ia42_style_audit_detects_bad_caption_and_role_margin(self):
+        from ru_thesis_builder import build,demo_report,SECTION_ROLES
+        from docx.shared import Inches
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)/"thesis";build(demo_report(),root)
+            path=root/"SYNTHETIC_RU_structure.docx";doc=Document(path)
+            doc.styles["RU Caption"].font.size=Pt(16)
+            doc.styles["RU Caption"]._element.rPr.find(qn("w:szCs")).set(qn("w:val"),"32")
+            doc.sections[1].top_margin=Inches(1.5)
+            doc.sections[5].top_margin=Inches(1)
+            doc.save(path)
+            qa=audit_styles(path,{"RUCaption":"caption"},section_roles=SECTION_ROLES)
+            failed=[c for c in qa["checks"] if c["status"]=="FAIL"]
+            self.assertTrue(any(c["field"]=="szCs" and c["expected"]==12 for c in failed))
+            self.assertEqual({c["location"] for c in failed if c["field"]=="top_margin_mm"},{"section:1","section:5"})

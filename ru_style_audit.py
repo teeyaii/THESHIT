@@ -25,7 +25,8 @@ def style_value(p,key):
 def role_rules(profile,role):
     size={"body":profile["body"]["size_pt"],"chapter":profile["chapter_size_pt"],
           "bibliography":profile.get("bibliography_pt"),"toc_title":profile.get("toc_title_pt"),
-          "appendix_divider":profile.get("appendix_divider_pt")}.get(role)
+          "appendix_divider":profile.get("appendix_divider_pt"),
+          "caption":profile.get("table_caption_pt")}.get(role)
     levels=profile.get("heading_sizes_pt")
     if role in ("heading1","heading2") and levels:
         size=levels[0 if role=="heading1" else 1]
@@ -42,7 +43,7 @@ def role_rules(profile,role):
         rules["paragraph"]={}
     return rules
 
-def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
+def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE,*,section_roles=None):
     """Classify paragraph styles explicitly; missing classifications are unresolved."""
     if not isinstance(role_by_style,dict) or not role_by_style or set(role_by_style.values())-ROLES:
         raise ValueError("Explicit supported style-role mapping required")
@@ -60,6 +61,13 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
         else:
             status="PASS" if actual==expected else "FAIL"
         checks.append({"location":loc,"field":field,"actual":actual,"expected":expected,"status":status})
+    if section_roles is not None:
+        margins=profile["margins_mm"]["top_by_role"]
+        if len(section_roles)!=len(doc.sections) or any(role not in margins for role in section_roles):
+            raise ValueError("One valid explicit role per section required")
+        for i,(sec,role) in enumerate(zip(doc.sections,section_roles)):
+            compare(f"section:{i}","top_margin_mm",sec.top_margin.mm if sec.top_margin is not None else None,margins[role])
+            checks[-1]["reason"]="RU p9 / physical11; explicit section role only, actual pagination requires Word"
     def paragraph(p,loc):
         if not p.text.strip():
             return
@@ -92,8 +100,10 @@ def audit_styles(path,role_by_style,template_rules=None,profile_id=PROFILE):
                 if role=="table" and rules.get("minimum_pt") is not None:
                     actual=checks[-1]["actual"];minimum=rules["minimum_pt"]
                     checks[-1].update(expected=minimum,status="UNRESOLVED" if actual is None else ("PASS" if actual>=minimum else "FAIL"),reason="Minimum table text size, printed p11 / physical 13; visual legibility still pending")
-                elif role in ("caption","table_label"):
-                    checks[-1]["reason"]="UNRESOLVED_CONFLICT X-08: p11 table text minimum 14 versus caption 12; label role also requires visual review."
+                elif role=="caption" and rules["size_pt"] is not None:
+                    checks[-1]["reason"]="RU p11 / physical13: caption 12 pt, distinct from table cell minimum"
+                elif role=="table_label":
+                    checks[-1]["reason"]="Table label role; exact size and rendering require template/Word review."
                 elif role=="front_title" and rules["size_pt"] is None:
                     checks[-1]["reason"]="Front-matter role is not necessarily a TOC heading; exact title size requires approved template."
                 elif role=="fixture_notice":
@@ -145,7 +155,7 @@ def main():
     parser.add_argument("--output",required=True)
     args=parser.parse_args()
     mapping=json.loads(Path(args.style_map).read_text(encoding="utf-8"))
-    result=audit_styles(args.docx,mapping["role_by_style"],mapping.get("paragraph_rules"))
+    result=audit_styles(args.docx,mapping["role_by_style"],mapping.get("paragraph_rules"),section_roles=mapping.get("section_roles"))
     with Path(args.output).open("x",encoding="utf-8") as f:
         json.dump(result,f,ensure_ascii=False,indent=2)
     return 1 if result["counts"]["FAIL"] or result["counts"]["UNRESOLVED"] else 0
