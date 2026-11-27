@@ -1,0 +1,10 @@
+# IA42-01–03 targeted remediation (2026-11-27)
+Baseline 9bef61dd5323f36b1c78068ffa478745e82e9751, PR #42. Codex acceptance archive was checked 158/158 hashes. Actual RU manual 1/2569, 43 physical pages, SHA256 11d970ddb0d05905fbf1003102d177f8019201e75dc1bc427f0054bbce4c8783. Printed p9,11,23,24 (physical 11,13,25,26) reviewed visually. No private files or fonts committed.
+
+- IA42-01: caption 12 pt regular; table cells minimum 14 pt retained. X-08 reconciled as different roles, not an advisor approval; table label size still provisional.
+- IA42-02: explicit synthetic page-role sections. Chapter openings 1 inch; Chapter 4 contains one deliberately planned continuation section with 1.5-inch margin and a visible page-number field. Remaining numbered-page sections retain 1.5 inches. Section-wide margins cannot implement arbitrary automatic first-page/continuation pagination. Word must validate opening fits on one page and correct section placement after actual pagination. Do not apply this fixture boundary to real manuscripts. No Word visual acceptance.
+- IA42-03: dedicated bilingual abstract-heading style 16 pt bold (both scripts), centered; article left-margin conflict X-05 unchanged.
+
+Old Codex probe test_ru_word_skeleton_and_audit expects exactly eight sections. A ninth section is intentional and required by the explicit continuation fixture. Preserve original report/harness; for a new retest, replace only obsolete section-count expectation with nine and independently assert the actual page roles, chapter positions, continuation content, first-page suppression and restart only once. Re-run all ten probes, not just three. Report original harness result separately if rerun unchanged. Verify source statistics and Word/Excel values unchanged. Test malformed/mutated documents with updated hashes to prove structural rejection. No real data, merge, release, or final acceptance.
+
+Remaining: current approved templates, Word Desktop/Browallia rendering and real page breaks/TOC, independent semantic/Thai benchmark review, mobile QA, license/owner release. Word COM denied in prior QA; no LibreOffice substitution for Word. Release remains BLOCKED.

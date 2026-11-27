@@ -40,10 +40,10 @@ def tables(report):
           [k,*[report["correlation"][j][k] for j in fields]]
           for k in fields],
       "Model":[["Metric","Value"],["R squared",model["r_squared"]],
-               ["Adjusted R squared",model["adjusted_r_squared"]],["F",model["f"]],
-               ["F p",model["f_p"]],["Residual df",model["df_residual"]],
+               ["Adjusted R squared",model["adjusted_r_squared"]],["OLS F",model["f"]],
+               ["OLS F p",model["f_p"]],["HC3 Wald F",model["hc3_f"]],["HC3 F p",model["hc3_f_p"]],["Primary inference",model["primary_inference"]],["Model df",model["df_model"]],["Residual df",model["df_residual"]],
                ["Independent check",model["independent_ols_hc3_check"]]],
-      "Coefficients":[["Variable","B","Beta","SE","p","CI lower","CI upper",
+      "Coefficients":[["Variable","B","Beta","OLS SE","OLS p","OLS CI lower","OLS CI upper",
                        "HC3 SE","HC3 p","HC3 lower","HC3 upper","VIF"]]+[
           [r["variable"],r["b"],r["beta_standardized"],r["se"],r["p"],*r["ci95"],
            r["hc3_se"],r["hc3_p"],*r["hc3_ci95"],r["vif"]]
@@ -59,7 +59,20 @@ def text_value(value):
     return str(value)
 
 def md_value(value):
-    return text_value(value).replace("\\","\\\\").replace("|","\\|").replace("\r"," ").replace("\n"," ")
+    return str(value).replace("\\","\\\\").replace("|","\\|").replace("\r"," ").replace("\n"," ")
+
+def display_cell(name,row,column,value):
+    """APA-like presentation only; Excel and JSON retain numeric values."""
+    if value is None:return "NA"
+    if type(value) not in (int,float):return str(value)
+    is_p=(name=="Model" and column==1 and row[0] in ("OLS F p","HC3 F p")) or (name=="Coefficients" and column in (4,8)) or (name=="Diagnostics" and column==1 and str(row[0]).endswith("_p"))
+    if is_p:
+        return "< .001" if value<.001 else f"{value:.3f}".removeprefix("0")
+    if type(value) is int:return str(value)
+    display=f"{value:.3f}"
+    if name=="Correlation" or (name=="Model" and row[0] in ("R squared","Adjusted R squared")):
+        display=display.replace("-0.","-.") if display.startswith("-0.") else display.removeprefix("0") if display.startswith("0.") else display
+    return display
 
 def source_hash(report):
     return hashlib.sha256(canonical(report).encode("utf-8")).hexdigest()
@@ -93,8 +106,12 @@ def build_report(report,output_dir):
                 cell.value=value
                 if isinstance(value,str):
                     cell.data_type="s"
-                table.cell(i,j).text=text_value(value)
-            md.append("| "+" | ".join(md_value(v) for v in row)+" |")
+                table.cell(i,j).text=display_cell(name,row,j,value)
+                if isinstance(value,float):
+                    # Keep raw numeric values; p-value convention is a display format.
+                    is_p=(name=="Model" and j==1 and row[0] in ("OLS F p","HC3 F p")) or (name=="Coefficients" and j in (4,8)) or (name=="Diagnostics" and j==1 and str(row[0]).endswith("_p"))
+                    cell.number_format='[<0.001]"< .001";.000' if is_p else "0.000"
+            md.append("| "+" | ".join(md_value(display_cell(name,row,j,v)) for j,v in enumerate(row))+" |")
             if i==0:
                 md.append("| "+" | ".join("---" for _ in row)+" |")
         sheet.freeze_panes="A2"
@@ -136,7 +153,7 @@ def verify_report(output_dir):
                 if len(actual[i])!=len(row) or len(word.rows[i].cells)!=len(row):
                     raise ValueError("Column count mismatch: "+name)
                 for j,value in enumerate(row):
-                    if not equivalent(value,actual[i][j]) or word.cell(i,j).text!=text_value(value):
+                    if not equivalent(value,actual[i][j]) or word.cell(i,j).text!=display_cell(name,row,j,value):
                         raise ValueError("Table value mismatch: "+name)
                     count+=1
     finally:

@@ -4,12 +4,14 @@ import json
 from pathlib import Path
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Mm,Pt
 from academic_writing import draft,verify_draft
 from statistical_engine import LABEL
 from report_engine import source_hash
+from ru_word_runs import add_script_runs
 
 PROFILE=Path(__file__).with_name("config")/"ru_article_profile.example.json"
 NOTICE="SYNTHETIC ARTICLE STRUCTURE — NOT FOR SUBMISSION"
@@ -55,16 +57,20 @@ def build(report,output_dir):
     sec=doc.sections[0];sec.page_width=Mm(profile["paper_mm"][0]);sec.page_height=Mm(profile["paper_mm"][1])
     for side,mm in profile["margins_mm"].items():
         setattr(sec,side+"_margin",Mm(mm))
-    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Body","body_pt",False)]:
+    for name,key,bold in [("RA Title","title_pt",True),("RA Heading","heading_pt",True),("RA Abstract Heading","heading_pt",True),("RA Body","body_pt",False),("RA Author","author_pt",False)]:
         s=doc.styles.add_style(name,WD_STYLE_TYPE.PARAGRAPH)
         s.font.name=profile["font"];s.font.size=Pt(profile[key]);s.font.bold=bold
         pr=s._element.get_or_add_rPr()
+        bold_cs=OxmlElement("w:bCs");bold_cs.set(qn("w:val"),"1" if bold else "0");pr.insert_element_before(bold_cs,"w:sz","w:szCs")
         for attr in ("ascii","hAnsi","eastAsia","cs"):
             pr.rFonts.set(qn("w:"+attr),profile["font"])
         size=OxmlElement("w:szCs");size.set(qn("w:val"),str(profile[key]*2));pr.append(size)
         s.paragraph_format.line_spacing=profile["line_spacing"]
         s.paragraph_format.widow_control=True
         s.paragraph_format.keep_with_next=bold
+        if name in ("RA Title","RA Abstract Heading"):s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.CENTER
+        if name=="RA Author":s.paragraph_format.alignment=WD_ALIGN_PARAGRAPH.RIGHT
+        if name=="RA Body":s.paragraph_format.first_line_indent=Mm(profile["body_first_line_mm"])
     doc.core_properties.author="THESHIT synthetic fixture"
     sec.header.paragraphs[0].text=NOTICE
     sec.header.paragraphs[0].style=doc.styles["RA Body"]
@@ -72,9 +78,13 @@ def build(report,output_dir):
     sec.footer.paragraphs[0].style=doc.styles["RA Body"]
     expected=[[ "RA Title",NOTICE],["RA Body","Source SHA256: "+data["source_sha256"]]]
     for heading,body in data["sections"]:
-        expected.extend([["RA Heading",heading],["RA Body",body]])
+        if heading=="Title":expected.append(["RA Title",body])
+        elif heading=="Author information":expected.append(["RA Author",body])
+        elif heading in ("บทคัดย่อ","Abstract"):expected.extend([["RA Abstract Heading",heading],["RA Body",body]])
+        elif heading in ("Methods fixture","Results fixture"):expected.append(["RA Body",body])
+        else:expected.extend([["RA Heading",heading],["RA Body",body]])
     for style,text in expected:
-        doc.add_paragraph(text,style=style)
+        add_script_runs(doc.add_paragraph(style=style),text)
     path=out/"SYNTHETIC_RU_article.docx";doc.save(path)
     data.update(expected_paragraphs=expected,docx_sha256=digest(path),
                 layout_profile_sha256=digest(PROFILE))
@@ -90,8 +100,20 @@ def verify(output_dir):
     doc=Document(path)
     if [[p.style.name,p.text] for p in doc.paragraphs]!=m["expected_paragraphs"]:
         raise ValueError("Article content/style mismatch")
+    abstracts=[p for p in doc.paragraphs if p.text in ("บทคัดย่อ","Abstract")]
+    if [p.text for p in abstracts]!=["บทคัดย่อ","Abstract"]:
+        raise ValueError("Bilingual abstract headings missing")
+    for p in abstracts:
+        st=p.style;pr=st._element.rPr
+        alignment=p.alignment if p.alignment is not None else st.paragraph_format.alignment
+        if (st.name!="RA Abstract Heading" or alignment!=WD_ALIGN_PARAGRAPH.CENTER or
+                st.font.size.pt!=16 or st.font.bold is not True or
+                pr.find(qn("w:szCs")).get(qn("w:val"))!="32" or
+                pr.find(qn("w:bCs")).get(qn("w:val"))!="1"):
+            raise ValueError("Abstract heading formatting mismatch")
     if doc.sections[0].header.paragraphs[0].text!=NOTICE or doc.sections[0].footer.paragraphs[0].text!=NOTICE:
         raise ValueError("Missing synthetic markers")
     return {"status":"SYNTHETIC_ARTICLE_STRUCTURE_QA_PASS","paragraphs_checked":len(doc.paragraphs),
             "facts_in_manifest":len(m["facts"]),"official_article_template_verified":False,
+            "left_margin_status":"UNRESOLVED_CONFLICT_X05",
             "word_visual_qa":"NOT_EXECUTED","final_acceptance":False}

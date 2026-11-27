@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from docx import Document
+from citation_language_qa import language_candidates
 from ru_thesis_builder import build,verify,demo_report,PROFILE
 
 class RUThesisTests(unittest.TestCase):
@@ -14,6 +15,7 @@ class RUThesisTests(unittest.TestCase):
             self.assertFalse(qa["final_acceptance"])
             self.assertEqual(qa["toc_status"],"FIELD_PRESENT_NOT_UPDATED")
             self.assertEqual(verify(p),qa)
+            self.assertNotIn("THAI_RUN_WITHOUT_CS",{w["code"] for w in language_candidates(p/"SYNTHETIC_RU_structure.docx")["warnings"]})
             doc=Document(p/"SYNTHETIC_RU_structure.docx")
             self.assertEqual(doc.styles["RU Chapter"].font.size.pt,20)
             self.assertEqual(doc.styles["RU Body"].font.size.pt,16)
@@ -28,6 +30,17 @@ class RUThesisTests(unittest.TestCase):
             self.assertEqual(doc.styles["RU Body"].font.name,"Browallia New")
             self.assertEqual(doc.styles["RU Body"].paragraph_format.first_line_indent.inches,0.5)
             self.assertTrue(doc.styles["RU Chapter"].paragraph_format.page_break_before)
+            self.assertEqual(len(doc.sections),9)
+            self.assertEqual([round(sec.top_margin.inches,2) for sec in doc.sections],
+                             [1.5,1,1,1,1,1.5,1,1.5,1.5])
+            self.assertEqual([sec.different_first_page_header_footer for sec in doc.sections[1:]],
+                             [True,True,True,True,False,True,True,True])
+            self.assertEqual(doc.styles["RU Caption"].font.size.pt,12)
+            self.assertFalse(doc.styles["RU Caption"].font.bold)
+            self.assertGreaterEqual(doc.styles["RU Table"].font.size.pt,14)
+            self.assertEqual(doc.sections[1].header_distance.inches,1)
+            self.assertEqual(doc.styles["RU Reference"].paragraph_format.first_line_indent.inches,-0.5)
+            self.assertIn("ตาราง 1",[p.text for p in doc.paragraphs])
             with self.assertRaises(FileExistsError):
                 build(demo_report(),p)
     def test_tampered_document(self):
@@ -43,3 +56,20 @@ class RUThesisTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 build(report,p)
             self.assertFalse(p.exists())
+
+    def test_ia42_margin_and_caption_regressions(self):
+        from ru_thesis_builder import sha
+        from docx.shared import Inches,Pt
+        import json
+        with tempfile.TemporaryDirectory() as d:
+            for defect in ("opening","continuation","caption"):
+                out=Path(d)/defect;build(demo_report(),out)
+                path=out/"SYNTHETIC_RU_structure.docx";doc=Document(path)
+                if defect=="opening":doc.sections[1].top_margin=Inches(1.5)
+                elif defect=="continuation":doc.sections[5].top_margin=Inches(1)
+                else:doc.styles["RU Caption"].font.size=Pt(16)
+                doc.save(path)
+                # Rehash deliberately: rejection must be semantic/structural, not just hash mismatch.
+                mp=out/"SYNTHETIC_structure_manifest.json";m=json.loads(mp.read_text(encoding="utf-8"))
+                m["docx_sha256"]=sha(path);mp.write_text(json.dumps(m),encoding="utf-8")
+                with self.assertRaises(ValueError):verify(out)

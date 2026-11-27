@@ -27,3 +27,11 @@ class ReferenceTests(unittest.TestCase):
         t=prepare([r])["entries"][0]["segments"][0]["text"]
         self.assertIn("Author18, A., … Author20, A.",t)
         self.assertNotIn("Author19,",t)
+
+    def test_thai_author_connector_and_reviewed_types(self):
+        r=dict(fixture(),language="th",apa_author_labels=["ผู้แต่ง ก","ผู้แต่ง ข"])
+        self.assertIn("ผู้แต่ง ก และ ผู้แต่ง ข",prepare([r])["entries"][0]["segments"][0]["text"])
+        for kind,fields in (("book",{"publisher":"Fixture Press"}),("thesis",{"thesis_description":"Master thesis","institution":"Fixture University"}),("website",{"site_name":"Fixture Site","url":"https://example.org/fixture"})):
+            item=dict(r,type=kind,**fields)
+            self.assertEqual(prepare([item])["entries"][0]["type"],kind)
+            with self.assertRaises(ValueError):prepare([dict(item,metadata_review_status="CANDIDATE")])
